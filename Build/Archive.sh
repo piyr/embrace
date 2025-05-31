@@ -70,6 +70,8 @@ unset XCODE_DEVELOPER_DIR_PATH
 TMP_DIR=$(mktemp -d /tmp/"${BUILD_PREFIX}"-Archive.XXXXXX)
 STATUS_MD="${TMP_DIR}/status.md"
 
+printenv >> "${TMP_DIR}/env.txt"
+
 # 1. Export archive to tmp location and set APP_FILE, push to parent directory
 mkdir -p "${TMP_DIR}"
 defaults write "${TMP_DIR}/options.plist" method developer-id
@@ -77,7 +79,9 @@ defaults write "${TMP_DIR}/options.plist" teamID "$TEAM_ID"
 
 set_status "Exporting archive from Xcode."
 
-xcodebuild -exportArchive -archivePath "${ARCHIVE_PATH}" -exportOptionsPlist "${TMP_DIR}/options.plist" -exportPath "${TMP_DIR}"
+xcodebuild -exportArchive -archivePath "${ARCHIVE_PATH}" -exportOptionsPlist "${TMP_DIR}/options.plist" -exportPath "${TMP_DIR}" \
+    1> "${TMP_DIR}/output-xcodebuild.txt" \
+    2> "${TMP_DIR}/output-xcodebuild-err.txt"
 
 APP_FILE=$(find "${TMP_DIR}" -name "$FULL_PRODUCT_NAME" | head -1)
 
