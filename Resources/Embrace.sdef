@@ -221,7 +221,7 @@
 				<cocoa key="scriptingComment"/>
             </property>
 
-			<property name="composer" access="r" code="comp" type="text" description="The composer of the track.">
+			<property name="composer" access="r" code="Comp" type="text" description="The composer of the track.">
 				<cocoa key="scriptingComposer"/>
             </property>
 
