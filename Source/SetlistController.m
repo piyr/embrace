@@ -32,6 +32,7 @@
 
 static NSString * const sMinimumSilenceKey = @"minimum-silence";
 static NSString * const sSavedAtKey = @"saved-at";
+static NSString * const sFadeStopPreviousVolumeDelay = @"fade-stop-previous-volume-delay";
 
 static NSInteger sAutoGapMinimum = 0;
 static NSInteger sAutoGapMaximum = 16;
@@ -413,7 +414,17 @@ static NSInteger sAutoGapMaximum = 16;
         if (action == PlaybackActionStop && shouldInvokeFadeStop) {
             [[self playButton] setIcon:SetlistButtonIconPlay animated:YES];
             [[Player sharedInstance] hardStop];
-            [[Player sharedInstance] setVolume:beforeVolume];
+            
+            double delayInSeconds = [[NSUserDefaults standardUserDefaults] doubleForKey:sFadeStopPreviousVolumeDelay];
+
+            if (delayInSeconds > 0) {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [[Player sharedInstance] setVolume:beforeVolume];
+                });
+
+            } else {
+                [[Player sharedInstance] setVolume:beforeVolume];
+            }
         }
     }
 }
