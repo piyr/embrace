@@ -1,7 +1,12 @@
 #!/bin/sh
 
-BUILD_PREFIX="Embrace"
-ZIP_TO="$HOME/Desktop"
+BUILD_PREFIX="${1:-$PRODUCT_NAME}"
+ZIP_TO="${2:-$HOME/Desktop}"
+
+if [ -z "$BUILD_PREFIX" ]; then
+    echo "Usage: Archive.sh <build-prefix>" >&2
+    exit 1
+fi
 
 # ----------------------------------
 # Fill variables from Private/Archive.plist
@@ -19,6 +24,7 @@ get_private_setting ()
 }
 
 TEAM_ID=$(          get_private_setting "team-id"          )
+CERTIFICATE=$(      get_private_setting "certificate"      )
 KEYCHAIN_PROFILE=$( get_private_setting "keychain-profile" )
 UPLOAD_TO=$(        get_private_setting "upload-to"        )
 PUBLIC_URL=$(       get_private_setting "public-url"       )
@@ -59,10 +65,6 @@ get_plist_build ()
     printf $(defaults read "$1" CFBundleVersion | sed 's/\s//g' )
 }
 
-get_private_setting ()
-{
-    defaults read "$1"
-}
 
 # Prevent error log spam
 unset XCODE_DEVELOPER_DIR_PATH
@@ -74,8 +76,11 @@ printenv >> "${TMP_DIR}/env.txt"
 
 # 1. Export archive to tmp location and set APP_FILE, push to parent directory
 mkdir -p "${TMP_DIR}"
+defaults write "${TMP_DIR}/options.plist" signingStyle manual
 defaults write "${TMP_DIR}/options.plist" method developer-id
+defaults write "${TMP_DIR}/options.plist" provisioningProfiles -dict
 defaults write "${TMP_DIR}/options.plist" teamID "$TEAM_ID"
+defaults write "${TMP_DIR}/options.plist" signingCertificate "$CERTIFICATE"
 
 set_status "Exporting archive from Xcode."
 
@@ -103,7 +108,7 @@ pushd "$APP_FILE"/.. > /dev/null
 
 # Zip up $APP_FILE to $ZIP_FILE and upload to notarization server
 
-zip --symlinks -r "$ZIP_FILE" $(basename "$APP_FILE")
+zip --symlinks -r "$ZIP_FILE" "$(basename "$APP_FILE")"
 
 set_status "Sending to Apple notary service. This may take several minutes."
 
@@ -131,7 +136,7 @@ if [[ "${SUBMIT_STATUS}" =~ "Accepted" ]] ; then
     xcrun stapler staple "$APP_FILE"
 
     FINAL_ZIP_FILE="$ZIP_TO/$ZIP_FILE"
-    zip --symlinks -r "$FINAL_ZIP_FILE" $(basename "$APP_FILE")
+    zip --symlinks -r "$FINAL_ZIP_FILE" "$(basename "$APP_FILE")"
     scp "$FINAL_ZIP_FILE" "$UPLOAD_TO"
 
     if [ -n "$PUBLIC_URL" ]; then
