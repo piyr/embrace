@@ -1,5 +1,16 @@
+-- SetlistAutomations.applescript
+-- This script contains event handlers triggered by the CloseEmbrace application.
+-- It automatically manages track colors, playback gaps (minimum silence),
+-- and effects bypassing based on the genres of the tracks in the setlist.
+
 using terms from application "CloseEmbrace"
 	
+	-- =========================================================
+	-- updateMinimumSilence
+	-- =========================================================
+	-- Helper subroutine to look ahead at the next track to adjust playback spacing.
+	-- If the next track is a Cortina, it tightens the gap to 2 seconds.
+	-- Otherwise, it restores the standard auto gap to 4 seconds.
 	on updateMinimumSilence()
 		tell application "CloseEmbrace"
 			set curIdx to current index
@@ -17,6 +28,13 @@ using terms from application "CloseEmbrace"
 		end tell
 	end updateMinimumSilence
 	
+	-- =========================================================
+	-- metadata available
+	-- =========================================================
+	-- Called immediately when CloseEmbrace finishes parsing a track's metadata.
+	-- Responsibilities:
+	-- 1. Apply color-coding to tracks based on genre (Cortina -> Red, Tango -> Blue, etc).
+	-- 2. Trigger an updateMinimumSilence check if the newly parsed track is the immediate next track to play.
 	on metadata available for t
 		tell application "CloseEmbrace"
 			set trackGenre to genre of t
@@ -41,6 +59,16 @@ using terms from application "CloseEmbrace"
 		end tell
 	end metadata available
 	
+	-- =========================================================
+	-- current track changed
+	-- =========================================================
+	-- Called whenever the application begins playing a new track or manually switches tracks.
+	-- Responsibilities:
+	-- 1. Automatically update the minimum silence for the upcoming transition based on the next track.
+	-- 2. If a Cortina starts playing:
+	--    a) Bypass any active audio effects for a clean sound.
+	--    b) Spawn an independent background 80s countdown timer to automatically stop/fade the Cortina.
+	-- 3. If a regular genre is playing, ensure audio effects are re-enabled.
 	on current track changed
 		tell application "CloseEmbrace"
 			my updateMinimumSilence()
@@ -49,6 +77,7 @@ using terms from application "CloseEmbrace"
 				if genre of current track is "Cortina" then
 					set bypassed of every effect to true
 					-- Run the non-blocking dialog in a background shell process
+					-- so the main thread of CloseEmbrace is never frozen.
 					do shell script "osascript -e '
 						try
 							tell application \"System Events\"
