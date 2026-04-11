@@ -455,7 +455,7 @@
         isPlaying = NO;
     }
     
-    CGFloat constant = isPlaying ? 8.0 : -13.0;
+    CGFloat constant = isPlaying ? 12.0 : -9.0;
     CGFloat alpha    = isPlaying ? 1.0 :  0.0;
 
     if (animated) {
@@ -762,12 +762,12 @@
         return [strings componentsJoinedByString:joiner];
     };
 
-    if ([preferences showsArtist]) {
-        [a_2L addObject:@(TrackViewAttributeArtist)];
-    }
-
     if ([preferences showsAlbumArtist]) {
         [a_2L addObject:@(TrackViewAttributeAlbumArtist)];
+    }
+
+    if ([preferences showsArtist]) {
+        [a_2L addObject:@(TrackViewAttributeArtist)];
     }
 
     if ([preferences showsYear]) {
