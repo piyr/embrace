@@ -8,15 +8,15 @@ using terms from application "CloseEmbrace"
 				set nextTrack to item (curIdx + 1) of tracks
 				if genre of nextTrack is "Cortina" then
 					set minimum silence to 2
-					display notification "Minimum silence set to 2 seconds (Cortina upcoming)" with title "CloseEmbrace"
+					display notification "Auto gap set to 2 seconds (Cortina upcoming)" with title "CloseEmbrace"
 				else
 					set minimum silence to 4
-					display notification "Minimum silence set to 4 seconds" with title "CloseEmbrace"
+					display notification "Auto gap reset to 4 seconds" with title "CloseEmbrace"
 				end if
 			end if
 		end tell
 	end updateMinimumSilence
-
+	
 	on metadata available for t
 		tell application "CloseEmbrace"
 			set trackGenre to genre of t
@@ -47,6 +47,7 @@ using terms from application "CloseEmbrace"
 			
 			if current track is not missing value then
 				if genre of current track is "Cortina" then
+					set bypassed of every effect to true
 					-- Run the non-blocking dialog in a background shell process
 					do shell script "osascript -e '
 						try
@@ -61,6 +62,8 @@ using terms from application "CloseEmbrace"
 							end if
 						end try
 					' > /dev/null 2>&1 &"
+				else
+					set bypassed of every effect to false
 				end if
 			end if
 		end tell
