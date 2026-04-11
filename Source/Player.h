@@ -34,6 +34,7 @@ extern volatile NSInteger PlayerShouldUseCrashPad;
 - (void) play;
 - (void) hardSkip;
 - (void) hardStop;
+- (void) fadeStop;
 
 @property (nonatomic) double volume;
 

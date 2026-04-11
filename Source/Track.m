@@ -913,11 +913,17 @@ static NSURL *sGetInternalURLForUUID(NSUUID *UUID, NSString *extension)
 }
 
 
-- (NSTimeInterval) playDuration
+- (NSTimeInterval) effectiveStopTime
 {
     NSTimeInterval duration = _decodedDuration ? _decodedDuration : _duration;
     NSTimeInterval stopTime = _stopTime ? _stopTime : duration;
-    return stopTime - _startTime;
+    return stopTime - [self silenceAtEnd];
+}
+
+
+- (NSTimeInterval) playDuration
+{
+    return [self effectiveStopTime] - _startTime;
 }
 
 

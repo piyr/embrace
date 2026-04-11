@@ -59,6 +59,9 @@ static double sMaxVolume = 1.0 - (2.0 / 32767.0);
 
     NSHashTable *_listeners;
     
+    NSTimer      *_fadeTimer;
+    double        _volumeBeforeFade;
+
     NSTimeInterval _roundedTimeElapsed;
     NSTimeInterval _roundedTimeRemaining;
 }
@@ -568,7 +571,7 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 
     [self _updateLoudnessAndPreAmp];
 
-    if (![_engine playAudioFile:file startTime:[track startTime] stopTime:[track stopTime] padding:padding]) {
+    if (![_engine playAudioFile:file startTime:[track startTime] stopTime:[track effectiveStopTime] padding:padding]) {
         EmbraceLog(@"Player", @"Couldn't play %@", file);
         [self hardStop];
     }
@@ -686,7 +689,19 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 {
     EmbraceLog(@"Player", @"-hardStop");
 
-    if (!_currentTrack) return;
+    BOOL wasFading = NO;
+    if (_fadeTimer) {
+        [_fadeTimer invalidate];
+        _fadeTimer = nil;
+        wasFading = YES;
+    }
+
+    if (!_currentTrack) {
+        if (wasFading) {
+            [self setVolume:_volumeBeforeFade];
+        }
+        return;
+    }
 
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_setupAndStartPlayback) object:nil];
     _setupAndStartPlayback_failureCount = 0;
@@ -714,6 +729,10 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 
     [_engine stopPlayback];
 
+    if (wasFading) {
+        [self setVolume:_volumeBeforeFade];
+    }
+
     _leftMeterData = _rightMeterData = nil;
     
     for (id<PlayerListener> listener in _listeners) {
@@ -722,6 +741,52 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 
     [self _sendDistributedNotification];
     [self _clearPowerAssertions];
+}
+
+
+- (void) fadeStop
+{
+    EmbraceLog(@"Player", @"-fadeStop");
+
+    if (!_currentTrack || _fadeTimer) return;
+
+    _volumeBeforeFade = [self volume];
+    
+    NSTimeInterval fadeDuration = 5.0;
+    if (_timeRemaining < fadeDuration) {
+        fadeDuration = _timeRemaining;
+    }
+
+    if (fadeDuration <= 0.1) {
+        [self hardStop];
+        return;
+    }
+
+    _fadeTimer = [NSTimer timerWithTimeInterval:0.05
+                                         target:self
+                                       selector:@selector(_handleFadeTimer:)
+                                       userInfo:@{@"duration": @(fadeDuration), @"start": [NSDate date]}
+                                        repeats:YES];
+    [[NSRunLoop mainRunLoop] addTimer:_fadeTimer forMode:NSRunLoopCommonModes];
+}
+
+
+- (void) _handleFadeTimer:(NSTimer *)timer
+{
+    NSDictionary *userInfo = [timer userInfo];
+    NSTimeInterval duration = [userInfo[@"duration"] doubleValue];
+    NSDate *start = userInfo[@"start"];
+    
+    NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:start];
+    double progress = elapsed / duration;
+
+    if (progress >= 1.0) {
+        [self hardStop];
+    } else {
+        double curve = (1.0 - progress) * (1.0 - progress);
+        double newVolume = _volumeBeforeFade * curve;
+        [self setVolume:newVolume];
+    }
 }
 
 

@@ -91,6 +91,10 @@ typedef NS_ENUM(NSInteger, TrackLabel) {
 @property (nonatomic, readonly) NSInteger beatsPerMinute;
 @property (nonatomic, readonly) NSTimeInterval startTime;
 @property (nonatomic, readonly) NSTimeInterval stopTime;
+
+// The stop time adjusted to exclude auto-detected silence at the end of the track.
+@property (nonatomic, readonly) NSTimeInterval effectiveStopTime;
+
 @property (nonatomic, readonly) NSTimeInterval duration;
 @property (nonatomic, readonly) NSInteger databaseID;
 @property (nonatomic, readonly) Tonality tonality;

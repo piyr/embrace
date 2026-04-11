@@ -505,8 +505,8 @@ static NSInteger sAutoGapMaximum = 16;
 
                 NSTimeInterval minimumSilence = [self minimumSilenceBetweenTracks];
 
-                NSTimeInterval totalSilence = [lastTrack silenceAtEnd] + [track silenceAtStart];
-                padding = minimumSilence - totalSilence;
+                NSTimeInterval nextTrackSilence = [track silenceAtStart];
+                padding = minimumSilence - nextTrackSilence;
                 if (padding < 0) padding = 0;
                 
                 if (minimumSilence > 0 && padding == 0) {
@@ -797,6 +797,8 @@ static NSInteger sAutoGapMaximum = 16;
         
             if (!isDoubleClick) {
                 _confirmStop = NO;
+                [[Player sharedInstance] fadeStop];
+            } else {
                 [[Player sharedInstance] hardStop];
             }
 
@@ -1190,8 +1192,8 @@ static NSInteger sAutoGapMaximum = 16;
         padding = HUGE_VAL;
 
     } else if (currentTrack && trackToPlay) {
-        NSTimeInterval totalSilence = [currentTrack silenceAtEnd] + [trackToPlay silenceAtStart];
-        padding = minimumSilence - totalSilence;
+        NSTimeInterval nextTrackSilence = [trackToPlay silenceAtStart];
+        padding = minimumSilence - nextTrackSilence;
         if (padding < 0) padding = 0;
         
         if (minimumSilence > 0 && padding == 0) {

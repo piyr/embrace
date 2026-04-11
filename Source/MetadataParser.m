@@ -223,7 +223,7 @@ static NSInteger sGetYear(NSString *yearString)
                 [dictionary setObject:stringValue forKey:TrackKeyComments];
             }
 
-        } else if ((key4cc == 'aART' || key4cc == 'TPE2' || key4cc == '\00TP2') && stringValue) { // Album Artist, 'soaa'
+        } else if (([key isEqual:@"ALBUMARTIST"] || [key isEqual:@"ALBUM ARTIST"] || key4cc == 'aART' || key4cc == 'TPE2' || key4cc == '\00TP2') && stringValue) { // Album Artist, 'soaa'
             [dictionary setObject:stringValue forKey:TrackKeyAlbumArtist];
             
         } else if ((key4cc == 'TKEY') && stringValue) { // Initial key as ID3v2.3 TKEY tag
@@ -253,7 +253,7 @@ static NSInteger sGetYear(NSString *yearString)
         } else if ((key4cc == '\00TT1') && stringValue) { // Grouping, ID3v2.2 TT1 tag
             [dictionary setObject:stringValue forKey:TrackKeyGrouping];
 
-        } else if (((key4cc == '\251day') || (key4cc == 'TDRC') || (key4cc == 'TYER') || (key4cc == '\00TYE')) && stringValue) { // Year, M4A '?day', MP3 'TDRC'/'TYER'/'TYE'
+        } else if (((key4cc == '\251day') || (key4cc == 'TDRC') || (key4cc == 'TYER') || (key4cc == '\00TYE') || [key isEqual:@"DATE"] || [commonKey isEqual:@"creationDate"]) && stringValue) { // Year, M4A '?day', MP3 'TDRC'/'TYER'/'TYE'
             NSInteger year = sGetYear(stringValue);
             if (year) [dictionary setObject:@(year) forKey:TrackKeyYear];
 
@@ -339,9 +339,13 @@ static NSInteger sGetYear(NSString *yearString)
     if (err == noErr) err = ExtAudioFileGetProperty(extAudioFile, kExtAudioFileProperty_AudioFile, &audioFileIDSize, &audioFileID);
     if (err == noErr) err = AudioFileGetProperty(audioFileID, kAudioFilePropertyInfoDictionary, &audioInfoSize, &audioInfo);
 
+    __weak MetadataParser *weakSelf = self;
     void (^transfer)(const char *, NSString *) = ^(const char *afKey, NSString *trackKey) {
         if (!audioInfo) return;
         
+        MetadataParser *strongSelf = weakSelf;
+        if (!strongSelf) return;
+
         NSString *nsKey = @(afKey);
        
         CFTypeRef cfValue = CFDictionaryGetValue(audioInfo, (__bridge void *)nsKey);
@@ -350,9 +354,9 @@ static NSInteger sGetYear(NSString *yearString)
             
             if ([nsValue isKindOfClass:[NSString class]]) {
                 if ([trackKey isEqualToString:TrackKeyYear]) {
-                    [_metadata setObject:@([nsValue integerValue]) forKey:TrackKeyYear];
+                    [strongSelf->_metadata setObject:@([nsValue integerValue]) forKey:TrackKeyYear];
                 } else {
-                    [_metadata setObject:nsValue forKey:trackKey];
+                    [strongSelf->_metadata setObject:nsValue forKey:trackKey];
                 }
             }
         }
@@ -368,6 +372,10 @@ static NSInteger sGetYear(NSString *yearString)
         transfer( kAFInfoDictionary_Tempo,        TrackKeyBPM        );
         transfer( kAFInfoDictionary_Title,        TrackKeyTitle      );
         transfer( kAFInfoDictionary_Year,         TrackKeyYear       );
+        transfer( "album artist",                 TrackKeyAlbumArtist );
+        transfer( "albumartist",                  TrackKeyAlbumArtist );
+        transfer( "DATE",                         TrackKeyYear       );
+        transfer( "BPM",                          TrackKeyBPM        );
     }
 
     if (audioInfo) {
@@ -471,6 +479,8 @@ static NSInteger sGetYear(NSString *yearString)
         NSString *type;
         [_URL getResourceValue:&type forKey:NSURLTypeIdentifierKey error:NULL];
 
+        if (asset) [self _parseUsingAVAsset:asset intoDictionary:_metadata];
+
         if (type && (
             UTTypeConformsTo((__bridge CFTypeRef)type, CFSTR("public.aifc-audio")) ||
             UTTypeConformsTo((__bridge CFTypeRef)type, CFSTR("public.aiff-audio")) ||
@@ -478,9 +488,6 @@ static NSInteger sGetYear(NSString *yearString)
         )) {
             [self _parseUsingAudioToolbox];
             [self _parseUsingCustomParsers];
-
-        } else {
-            if (asset) [self _parseUsingAVAsset:asset intoDictionary:_metadata];
         }
     }
     

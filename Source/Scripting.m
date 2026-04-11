@@ -118,7 +118,7 @@
     Player *player = [Player sharedInstance];
     
     if ([player isPlaying]) {
-        [player hardStop];
+        [player fadeStop];
     }
 }
 
