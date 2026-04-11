@@ -13,8 +13,8 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <menu title="AMainMenu" systemMenu="main" id="29">
             <items>
-                <menuItem title="Embrace" id="56">
-                    <menu key="submenu" title="Embrace" systemMenu="apple" id="57">
+                <menuItem title="CloseEmbrace" id="56">
+                    <menu key="submenu" title="CloseEmbrace" systemMenu="apple" id="57">
                         <items>
                             <menuItem title="About Embrace" id="58">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -80,7 +80,7 @@
                             <menuItem isSeparatorItem="YES" id="149">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Quit Embrace" keyEquivalent="q" id="136">
+                            <menuItem title="Quit CloseEmbrace" keyEquivalent="q" id="136">
                                 <connections>
                                     <action selector="terminate:" target="-3" id="449"/>
                                 </connections>

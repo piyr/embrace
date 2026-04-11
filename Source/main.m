@@ -16,7 +16,7 @@ static void sLogHello()
     NSString *versionString = [localizedInfoDictionary objectForKey:@"CFBundleShortVersionString"];
     if (!versionString) versionString = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
 
-    EmbraceLog(@"Hello", @"Embrace %@ (%@) launched at %@", versionString, buildString, [NSDate date]);
+    EmbraceLog(@"Hello", @"CloseEmbrace %@ (%@) launched at %@", versionString, buildString, [NSDate date]);
     EmbraceLog(@"Hello", @"Running on macOS %@", [[NSProcessInfo processInfo] operatingSystemVersionString]);
 }
 

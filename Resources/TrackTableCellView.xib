@@ -15,19 +15,19 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="eIS-U0-iuH" customClass="TrackStripeView">
-                    <rect key="frame" x="0.0" y="0.0" width="312" height="1"/>
+                    <rect key="frame" x="4" y="0.0" width="308" height="1"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="1" id="Y7C-1H-Yrz"/>
                     </constraints>
                 </customView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="nkF-z6-beo" userLabel="Edge Label View" customClass="TrackLabelView">
-                    <rect key="frame" x="308" y="0.0" width="4" height="60"/>
+                    <rect key="frame" x="0.0" y="0.0" width="4" height="60"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="4" id="bwu-kj-Gmb"/>
                     </constraints>
                 </customView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="G0T-eR-fVJ" userLabel="Container">
-                    <rect key="frame" x="0.0" y="0.0" width="312" height="60"/>
+                    <rect key="frame" x="4" y="0.0" width="308" height="60"/>
                     <subviews>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="0mJ-te-wAf">
                             <rect key="frame" x="23" y="42" width="247" height="16"/>
@@ -119,14 +119,14 @@
             </subviews>
             <constraints>
                 <constraint firstAttribute="right" secondItem="G0T-eR-fVJ" secondAttribute="right" id="0N9-pc-9gY"/>
-                <constraint firstItem="G0T-eR-fVJ" firstAttribute="left" secondItem="7VA-Gs-oX4" secondAttribute="left" id="HDY-TH-VX6"/>
+                <constraint firstItem="G0T-eR-fVJ" firstAttribute="left" secondItem="nkF-z6-beo" secondAttribute="right" id="HDY-TH-VX6"/>
                 <constraint firstAttribute="right" secondItem="eIS-U0-iuH" secondAttribute="right" id="KOp-Jh-dLd"/>
                 <constraint firstAttribute="bottom" secondItem="G0T-eR-fVJ" secondAttribute="bottom" id="T6z-hx-tMa"/>
-                <constraint firstAttribute="right" secondItem="nkF-z6-beo" secondAttribute="right" id="Tbc-Gt-oiP"/>
+                <constraint firstItem="nkF-z6-beo" firstAttribute="left" secondItem="7VA-Gs-oX4" secondAttribute="left" id="Tbc-Gt-oiP"/>
                 <constraint firstAttribute="bottom" secondItem="eIS-U0-iuH" secondAttribute="bottom" id="U7j-0S-Pec"/>
                 <constraint firstItem="G0T-eR-fVJ" firstAttribute="top" secondItem="7VA-Gs-oX4" secondAttribute="top" id="ewP-UV-7o4"/>
                 <constraint firstAttribute="bottom" secondItem="nkF-z6-beo" secondAttribute="bottom" id="fcx-0Y-1hO"/>
-                <constraint firstItem="eIS-U0-iuH" firstAttribute="left" secondItem="7VA-Gs-oX4" secondAttribute="left" id="ift-y9-fYC"/>
+                <constraint firstItem="eIS-U0-iuH" firstAttribute="left" secondItem="nkF-z6-beo" secondAttribute="right" id="ift-y9-fYC"/>
                 <constraint firstItem="nkF-z6-beo" firstAttribute="top" secondItem="7VA-Gs-oX4" secondAttribute="top" id="wkt-Ne-T5f"/>
             </constraints>
             <connections>
