@@ -240,7 +240,7 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
 
             [[self tableView] endUpdates];
             
-            [self _didModifyTracks];
+            [self _didModifyTracksIsAddition:YES];
 
             return YES;
         }
@@ -297,14 +297,15 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
 }
 
 
-- (void) _didModifyTracks
+- (void) _didModifyTracksIsAddition:(BOOL)isAddition
 {
     [self detectDuplicates];
 
     NSTimeInterval t = [NSDate timeIntervalSinceReferenceDate];
     [[NSUserDefaults standardUserDefaults] setObject:@(t) forKey:sModifiedAtKey];
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:TracksControllerDidModifyTracksNotificationName object:self];
+    NSDictionary *userInfo = @{ @"isAddition": @(isAddition) };
+    [[NSNotificationCenter defaultCenter] postNotificationName:TracksControllerDidModifyTracksNotificationName object:self userInfo:userInfo];
 
     [self _saveState];
 }
@@ -545,7 +546,7 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
             }];
         }
 
-        [self _didModifyTracks];
+        [self _didModifyTracksIsAddition:NO];
 
         [[self tableView] endUpdates];
         
@@ -643,7 +644,7 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
                 [_tracks removeObjectsAtIndexes:_draggedIndexSet];
                 [[self tableView] endUpdates];
  
-                [self _didModifyTracks];
+                [self _didModifyTracksIsAddition:NO];
                 
                 NSShowAnimationEffect(NSAnimationEffectPoof, [NSEvent mouseLocation], NSZeroSize, nil, nil, nil);
             }
@@ -946,7 +947,7 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
     if ([_tracks count] == 0) {
         [self removeAllTracks];
     } else {
-        [self _didModifyTracks];
+        [self _didModifyTracksIsAddition:NO];
     }
 }
 
@@ -1145,7 +1146,7 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
     [[self tableView] deselectAll:nil];
     [[self tableView] reloadData];
 
-    [self _didModifyTracks];
+    [self _didModifyTracksIsAddition:NO];
 }
 
 
@@ -1168,7 +1169,7 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
     }
 
     [[self tableView] reloadData];
-    [self _didModifyTracks];
+    [self _didModifyTracksIsAddition:NO];
 }
 
 

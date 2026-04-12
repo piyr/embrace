@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "558DC07E187785BC00C85770"
-               BuildableName = "Embrace.app"
+               BuildableName = "CloseEmbrace.app"
                BlueprintName = "Embrace"
                ReferencedContainer = "container:Embrace.xcodeproj">
             </BuildableReference>
@@ -31,7 +31,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "558DC07E187785BC00C85770"
-            BuildableName = "Embrace.app"
+            BuildableName = "CloseEmbrace.app"
             BlueprintName = "Embrace"
             ReferencedContainer = "container:Embrace.xcodeproj">
          </BuildableReference>
@@ -77,7 +77,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "558DC07E187785BC00C85770"
-            BuildableName = "Embrace.app"
+            BuildableName = "CloseEmbrace.app"
             BlueprintName = "Embrace"
             ReferencedContainer = "container:Embrace.xcodeproj">
          </BuildableReference>
@@ -118,7 +118,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "558DC07E187785BC00C85770"
-            BuildableName = "Embrace.app"
+            BuildableName = "CloseEmbrace.app"
             BlueprintName = "Embrace"
             ReferencedContainer = "container:Embrace.xcodeproj">
          </BuildableReference>
@@ -140,7 +140,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "558DC07E187785BC00C85770"
-                     BuildableName = "Embrace.app"
+                     BuildableName = "CloseEmbrace.app"
                      BlueprintName = "Embrace"
                      ReferencedContainer = "container:Embrace.xcodeproj">
                   </BuildableReference>

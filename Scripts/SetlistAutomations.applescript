@@ -39,13 +39,13 @@ using terms from application "CloseEmbrace"
 		tell application "CloseEmbrace"
 			set trackGenre to genre of t
 			if trackGenre is "Cortina" then
-				set label of t to red
+				set label of t to green
 			else if trackGenre is "Tango" then
 				set label of t to blue
 			else if trackGenre is "Vals" then
 				set label of t to orange
 			else if trackGenre is "Milonga" then
-				set label of t to green
+				set label of t to red
 			end if
 			
 			set curIdx to current index
@@ -86,7 +86,7 @@ using terms from application "CloseEmbrace"
 							end tell
 							if gave up of dlg is true then
 								tell application \"CloseEmbrace\" to stop
-								delay 5
+								delay 8
 								tell application \"CloseEmbrace\" to play
 							end if
 						end try
@@ -97,5 +97,20 @@ using terms from application "CloseEmbrace"
 			end if
 		end tell
 	end current track changed
+	
+	-- =========================================================
+	-- =========================================================
+	-- setlist changed
+	-- =========================================================
+	-- Called whenever the application modifies the setlist (e.g., via drag and drop reordering, deletion).
+	-- Additions are consciously bypassed by the native app to prevent duplicate triggering
+	-- alongside the 'metadata available' handler.
+	-- Responsibilities:
+	-- 1. Ensure the gap is re-tuned if the next track order is changed.
+	on setlist changed
+		tell application "CloseEmbrace"
+			my updateMinimumSilence()
+		end tell
+	end setlist changed
 	
 end using terms from

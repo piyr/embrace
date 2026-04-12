@@ -6,6 +6,7 @@
 #import "Preferences.h"
 #import "ScriptFile.h"
 #import "Track.h"
+#import "TracksController.h"
 
 
 NSString * const ScriptsManagerDidReloadNotification = @"ScriptsManagerDidReload";
@@ -50,6 +51,7 @@ static NSArray *sGetScriptFileTypes()
 
         // This is public API, use "com.iccir.Embrace" even if our bundle ID is "com.ricciadams.opensource.Embrace"
         [[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(_handlePlayerUpdate:) name:@"com.iccir.Embrace.playerUpdate" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleTracksChanged:) name:TracksControllerDidModifyTracksNotificationName object:nil];
     }
     
     return self;
@@ -221,6 +223,17 @@ static NSArray *sGetScriptFileTypes()
 }
 
 
+- (void) _handleTracksChanged:(NSNotification *)note
+{
+    NSDictionary *userInfo = [note userInfo];
+    BOOL isAddition = [[userInfo objectForKey:@"isAddition"] boolValue];
+    
+    if (!isAddition) {
+        [self callTracksChanged];
+    }
+}
+
+
 #pragma mark - Public Methods
 
 - (void) callMetadataAvailableWithTrack:(Track *)track
@@ -258,6 +271,27 @@ static NSArray *sGetScriptFileTypes()
     if (!target) return;
 
     NSAppleEventDescriptor *appleEvent = [[NSAppleEventDescriptor alloc] initWithEventClass:'embr' eventID:'he01' targetDescriptor:target returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
+    if (!appleEvent) return;
+
+    NSDictionary *errorInfo = nil;
+    
+    [handlerScript executeAppleEvent:appleEvent error:&errorInfo];
+    
+    if (errorInfo) {
+        [self _logErrorInfo:errorInfo when:@"running" scriptFile:_handlerScriptFile];
+    }
+}
+
+
+- (void) callTracksChanged
+{
+    NSAppleScript *handlerScript = [self _handlerScript];
+    if (!handlerScript) return;
+    
+    NSAppleEventDescriptor *target = [NSAppleEventDescriptor nullDescriptor];
+    if (!target) return;
+
+    NSAppleEventDescriptor *appleEvent = [[NSAppleEventDescriptor alloc] initWithEventClass:'embr' eventID:'he02' targetDescriptor:target returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
     if (!appleEvent) return;
 
     NSDictionary *errorInfo = nil;

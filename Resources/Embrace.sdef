@@ -314,5 +314,9 @@
         <event name="current track changed" code="embrhe01" description="This handler is called when Embrace changes the current track.">
             <cocoa name="CurrentTrackChanged" class="EventHandlerCommand"/>
         </event>
+
+        <event name="setlist changed" code="embrhe02" description="This handler is called when the setlist is modified.">
+            <cocoa name="TracksChanged" class="EventHandlerCommand"/>
+        </event>
     </suite>
 </dictionary>
