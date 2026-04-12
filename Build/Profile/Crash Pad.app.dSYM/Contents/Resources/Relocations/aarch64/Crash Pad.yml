@@ -1,0 +1,19 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/prashantiyer/Documents/embrace/build/Profile/Crash Pad.app/Contents/MacOS/Crash Pad'
+relocations:
+  - { offset: 0x75AF8, size: 0x8, addend: 0x0, symName: '-[CrashPadAppDelegate _tick:]', symObjAddr: 0x0, symBinAddr: 0x100000CC0, symSize: 0x11C }
+  - { offset: 0x75B3D, size: 0x8, addend: 0x0, symName: _SecTranslocateIsTranslocatedURL, symObjAddr: 0x4F58, symBinAddr: 0x1000088A0, symSize: 0x0 }
+  - { offset: 0x75B8E, size: 0x8, addend: 0x0, symName: _SecTranslocateCreateOriginalPathForURL, symObjAddr: 0x4F60, symBinAddr: 0x1000088A8, symSize: 0x0 }
+  - { offset: 0x75BEA, size: 0x8, addend: 0x0, symName: '-[CrashPadAppDelegate _tick:]', symObjAddr: 0x0, symBinAddr: 0x100000CC0, symSize: 0x11C }
+  - { offset: 0x75C70, size: 0x8, addend: 0x0, symName: '-[CrashPadAppDelegate _runAlertWithIcon:]', symObjAddr: 0x11C, symBinAddr: 0x100000DDC, symSize: 0x218 }
+  - { offset: 0x75CE3, size: 0x8, addend: 0x0, symName: '-[CrashPadAppDelegate applicationDidFinishLaunching:]', symObjAddr: 0x334, symBinAddr: 0x100000FF4, symSize: 0x174 }
+  - { offset: 0x75DC0, size: 0x8, addend: 0x0, symName: '___53-[CrashPadAppDelegate applicationDidFinishLaunching:]_block_invoke', symObjAddr: 0x4A8, symBinAddr: 0x100001168, symSize: 0x320 }
+  - { offset: 0x75F3A, size: 0x8, addend: 0x0, symName: _sGetSecTranslocateSymbol, symObjAddr: 0x908, symBinAddr: 0x1000015C8, symSize: 0x70 }
+  - { offset: 0x75FA0, size: 0x8, addend: 0x0, symName: '___53-[CrashPadAppDelegate applicationDidFinishLaunching:]_block_invoke_2', symObjAddr: 0x7C8, symBinAddr: 0x100001488, symSize: 0x5C }
+  - { offset: 0x7600D, size: 0x8, addend: 0x0, symName: '___53-[CrashPadAppDelegate applicationDidFinishLaunching:]_block_invoke_3', symObjAddr: 0x824, symBinAddr: 0x1000014E4, symSize: 0x18 }
+  - { offset: 0x7604C, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0x83C, symBinAddr: 0x1000014FC, symSize: 0x8 }
+  - { offset: 0x76073, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0x844, symBinAddr: 0x100001504, symSize: 0x8 }
+  - { offset: 0x76092, size: 0x8, addend: 0x0, symName: '-[CrashPadAppDelegate .cxx_destruct]', symObjAddr: 0x84C, symBinAddr: 0x10000150C, symSize: 0x30 }
+  - { offset: 0x760C5, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x87C, symBinAddr: 0x10000153C, symSize: 0x8C }
+...

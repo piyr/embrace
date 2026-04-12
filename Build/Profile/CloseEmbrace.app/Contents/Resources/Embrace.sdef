@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="Embrace Terminology" xmlns:xi="http://www.w3.org/2003/XInclude">
+
+	<suite name="Standard Suite" code="????" description="Common classes and commands for all applications.">
+		<command name="quit" code="aevtquit" description="Quit the application.">
+			<cocoa class="NSQuitCommand"/>
+			<parameter name="saving" code="savo" type="save options" optional="yes" description="Should changes be saved before quitting?">
+				<cocoa key="SaveOptions"/>
+			</parameter>
+		</command>
+
+		<command name="count" code="corecnte" description="Return the number of elements of a particular class within an object.">
+			<cocoa class="NSCountCommand"/>
+			<access-group identifier="*"/>
+			<direct-parameter type="specifier" requires-access="r" description="The objects to be counted."/>
+			<parameter name="each" code="kocl" type="type" optional="yes" description="The class of objects to be counted." hidden="yes">
+				<cocoa key="ObjectClass"/>
+			</parameter>
+			<result type="integer" description="The count."/>
+		</command>
+
+		<command name="exists" code="coredoex" description="Verify that an object exists.">
+			<cocoa class="NSExistsCommand"/>
+			<access-group identifier="*"/>
+			<direct-parameter type="any" requires-access="r" description="The object(s) to check."/>
+			<result type="boolean" description="Did the object(s) exist?"/>
+		</command>
+
+		<class name="application" code="capp" description="The application's top-level scripting object.">
+			<cocoa class="Application"/>
+
+			<property name="name" code="pnam" type="text" access="r" description="The name of the application."/>
+			<property name="frontmost" code="pisf" type="boolean" access="r" description="Is this the active application?">
+				<cocoa key="isActive"/>
+			</property>
+			<property name="version" code="vers" type="text" access="r" description="The version number of the application."/>
+			<element type="window" access="r">
+				<cocoa key="orderedWindows"/>
+			</element>
+			<responds-to command="quit">
+				<cocoa method="handleQuitScriptCommand:"/>
+			</responds-to>
+		</class>
+
+		<class name="window" code="cwin" description="A window.">
+			<cocoa class="NSWindow"/>
+			<property name="name" code="pnam" type="text" access="r" description="The title of the window.">
+				<cocoa key="title"/>
+			</property>
+			<property name="id" code="ID  " type="integer" access="r" description="The unique identifier of the window.">
+				<cocoa key="uniqueID"/>
+			</property>
+			<property name="index" code="pidx" type="integer" description="The index of the window, ordered front to back.">
+				<cocoa key="orderedIndex"/>
+			</property>
+			<property name="bounds" code="pbnd" type="rectangle" description="The bounding rectangle of the window.">
+				<cocoa key="boundsAsQDRect"/>
+			</property>
+			<property name="closeable" code="hclb" type="boolean" access="r" description="Does the window have a close button?">
+				<cocoa key="hasCloseBox"/>
+			</property>
+			<property name="miniaturizable" code="ismn" type="boolean" access="r" description="Does the window have a minimize button?">
+				<cocoa key="isMiniaturizable"/>
+			</property>
+			<property name="miniaturized" code="pmnd" type="boolean" description="Is the window minimized right now?">
+				<cocoa key="isMiniaturized"/>
+			</property>
+			<property name="resizable" code="prsz" type="boolean" access="r" description="Can the window be resized?">
+				<cocoa key="isResizable"/>
+			</property>
+			<property name="visible" code="pvis" type="boolean" description="Is the window visible right now?">
+				<cocoa key="isVisible"/>
+			</property>
+			<property name="zoomable" code="iszm" type="boolean" access="r" description="Does the window have a zoom button?">
+				<cocoa key="isZoomable"/>
+			</property>
+			<property name="zoomed" code="pzum" type="boolean" description="Is the window zoomed right now?">
+				<cocoa key="isZoomed"/>
+			</property>
+			<property name="document" code="docu" type="document" access="r" description="The document whose contents are displayed in the window."/>
+			<responds-to command="close">
+				<cocoa method="handleCloseScriptCommand:"/>
+			</responds-to>
+		</class>
+    </suite>
+
+
+	<suite name="Embrace Suite" code="embr" description="Classes for the Embrace application.">
+		<enumeration name="saveable file format" code="savf">
+			<enumerator name="text" code="text" description="text format">
+				<cocoa string-value="public.text"/>
+			</enumerator>
+		</enumeration>
+
+        <command name="play" code="embrplay" description="Starts playback.">
+            <access-group identifier="*"/>
+        </command>
+
+        <command name="stop" code="embrstop" description="Stops playback.">
+            <access-group identifier="*"/>
+        </command>
+      
+        <class-extension extends="application" description="The Embrace application.">
+            <element access="r" description="The tracks in the set list" type="track">
+                <cocoa key="scriptingTracks"/>
+            </element>
+
+            <element access="r" description="The list of Additional Effects" type="effect">
+                <cocoa key="scriptingEffects"/>
+            </element>
+            
+			<property name="current track" access="r" code="curt" type="track" description="The currently playing track">
+            	<cocoa key="scriptingCurrentTrack"/>
+            </property>
+
+			<property name="current index" access="r" code="curi" type="integer" description="The index of the currently playing track">
+            	<cocoa key="scriptingCurrentIndex"/>
+            </property>
+
+			<property name="elapsed time" access="r" code="elps" type="real" description="The elapsed time in seconds. Negative when Auto Gap is active.">
+            	<cocoa key="scriptingElapsedTime"/>
+            </property>
+
+			<property name="remaining time" access="r" code="rems" type="real" description="The remaining time in seconds.">
+            	<cocoa key="scriptingRemainingTime"/>
+            </property>
+
+            <property name="volume" access="rw" code="volm" type="real" description="The volume.">
+                <cocoa key="scriptingVolume"/>
+            </property>
+
+            <property name="minimum silence" access="rw" code="mslc" type="real" description="The minimum silence between tracks in seconds.">
+                <cocoa key="scriptingMinimumSilence"/>
+            </property>
+
+            <property name="player state" access="r" code="plst" type="playerState" description="Is Embrace playing or stopped?">
+                <cocoa key="scriptingPlayerState"/>
+            </property>
+
+            <responds-to command="stop">
+                <cocoa method="handleStopScriptCommand:"/>
+            </responds-to>
+
+            <responds-to command="play">
+                <cocoa method="handlePlayScriptCommand:"/>
+            </responds-to>
+
+        </class-extension>
+
+        <enumeration name="playerState" code="plst">
+            <enumerator name="stopped" code="pls0" description="Embrace is currently stopped.">
+                <cocoa integer-value="0"/>
+            </enumerator>
+            <enumerator name="playing" code="pls1" description="Embrace is currently playing.">
+                <cocoa integer-value="1"/>
+            </enumerator>
+        </enumeration>
+
+		<enumeration name="trackStatus" code="trst">
+			<enumerator name="queued" code="trsa" description="The track is queued for playback.">
+				<cocoa integer-value="0"/>
+			</enumerator>
+			<enumerator name="playing" code="trsb" description="The track is currently being played.">
+				<cocoa integer-value="1"/>
+			</enumerator>
+			<enumerator name="played" code="trsc" description="The track was played.">
+				<cocoa integer-value="2"/>
+			</enumerator>
+		</enumeration>
+
+        <enumeration name="trackLabel" code="trla">
+            <enumerator name="none" code="trln" description="The track has no color label.">
+                <cocoa integer-value="0"/>
+            </enumerator>
+            <enumerator name="red" code="trlr" description="The track has a red color label.">
+                <cocoa integer-value="1"/>
+            </enumerator>
+            <enumerator name="orange" code="trlo" description="The track has an orange color label.">
+                <cocoa integer-value="2"/>
+            </enumerator>
+            <enumerator name="yellow" code="trly" description="The track has a yellow color label.">
+                <cocoa integer-value="3"/>
+            </enumerator>
+            <enumerator name="green" code="trlg" description="The track has a green color label.">
+                <cocoa integer-value="4"/>
+            </enumerator>
+            <enumerator name="blue" code="trlb" description="The track has a blue color label.">
+                <cocoa integer-value="5"/>
+            </enumerator>
+            <enumerator name="purple" code="trlp" description="The track has a purple color label.">
+                <cocoa integer-value="6"/>
+            </enumerator>
+        </enumeration>
+
+		<class name="track" code="trck" description="An track in the set list.">
+			<cocoa class="Track"/>
+
+            <property name="id" code="ID  " description="A unique identifier for this track." type="text" access="r">
+                <cocoa key="scriptingID" />
+            </property>
+
+			<property name="aggregate" access="r" code="aggr" type="text" description="A tab-delimited string containing ( title, artist, album, genre, comments, album artist, composer, grouping ). Additional fields may be added in future versions, order of existing fields will not change.">
+				<cocoa key="scriptingAggregate"/>
+            </property>
+
+			<property name="album" access="r" code="albm" type="text" description="The album name of the track.">
+				<cocoa key="scriptingAlbum"/>
+            </property>
+
+			<property name="album artist" access="r" code="alba" type="text" description="The album artist of the track.">
+				<cocoa key="scriptingAlbumArtist"/>
+            </property>
+
+			<property name="artist" access="r" code="arti" type="text" description="The artist/source of the track.">
+				<cocoa key="scriptingArtist"/>
+            </property>
+
+			<property name="comment" access="r" code="comm" type="text" description="The freeform notes about the track.">
+				<cocoa key="scriptingComment"/>
+            </property>
+
+			<property name="composer" access="r" code="Comp" type="text" description="The composer of the track.">
+				<cocoa key="scriptingComposer"/>
+            </property>
+
+			<property name="database ID" access="r" code="dbid" type="integer" description="The Music database ID of the track, if available.">
+				<cocoa key="scriptingDatabaseID"/>
+            </property>
+
+			<property name="duration" access="r" code="tdur" type="real" description="The length of the track in seconds.">
+				<cocoa key="scriptingDuration"/>
+            </property>
+
+			<property name="energy level" access="r" code="ener" type="integer" description="The average energy level of the track (1-10, 0 if unknown).">
+				<cocoa key="scriptingEnergyLevel"/>
+            </property>
+
+			<property name="file" code="file" description="The track&apos;s location on disk." type="file" access="r">
+				<cocoa key="scriptingFile"/>
+			</property>
+
+			<property name="genre" access="r" code="genr" type="text" description="The genre of the track.">
+				<cocoa key="scriptingGenre"/>
+            </property>
+
+            <property name="label" access="rw" code="labl" type="trackLabel" description="The color label of the track.">
+                <cocoa key="scriptingLabel"/>
+            </property>
+
+            <property name="expected duration" access="rw" code="edur" type="real" description="When non-zero, expected duration is used to estimate End Time.">
+                <cocoa key="scriptingExpectedDuration"/>
+            </property>
+
+            <property name="stops after playing" access="rw" code="stpl" type="boolean" description="If true, playback stops after this track.">
+                <cocoa key="scriptingStopsAfterPlaying"/>
+            </property>
+
+            <property name="ignores auto gap" access="rw" code="igag" type="boolean" description="If true, playback proceeds to the next track immediately.">
+                <cocoa key="scriptingIgnoresAutoGap"/>
+            </property>
+
+			<property name="grouping" access="r" code="grop" type="text" description="The grouping of the track.">
+				<cocoa key="scriptingGrouping"/>
+            </property>
+
+			<property name="key signature" access="r" code="ksig" type="text" description="The key signature of the track.">
+				<cocoa key="scriptingKeySignature"/>
+            </property>
+
+			<property name="title" access="r" code="titl" type="text" description="The title of the track.">
+				<cocoa key="scriptingTitle"/>
+            </property>
+
+			<property name="track status" access="r" code="stat" type="trackStatus" description="The status of the track.">
+				<cocoa key="scriptingTrackStatus"/>
+            </property>
+
+			<property name="year" access="r" code="year" type="integer" description="The year the track was recorded/released.">
+				<cocoa key="scriptingYear"/>
+            </property>
+
+		</class>
+
+        <class name="effect" code="fxfx" description="An effect in the Additional Effects list.">
+            <cocoa class="Effect"/>
+
+            <property name="id" code="ID  " description="A unique identifier for this effect." type="text" access="r">
+                <cocoa key="scriptingID" />
+            </property>
+
+            <property name="name" access="r" code="pnam" type="text" description="The name of the effect.">
+                <cocoa key="scriptingName"/>
+            </property>
+
+            <property name="manufacturer" access="r" code="fxmn" type="text" description="The manufacturer of the effect.">
+                <cocoa key="scriptingManufacturer"/>
+            </property>
+
+            <property name="bypassed" code="fxby" type="boolean" description="Is the effect bypassed?">
+                <cocoa key="scriptingBypass"/>
+            </property>
+        </class>
+	</suite>
+
+    <suite name="Embrace Event Handler Suite" code="embr" description="Commands that are executed as Embrace event handlers.">
+        <event name="metadata available" code="embrhe00" description="This handler is called when Embrace parses a track's metadata.">
+            <cocoa name="MetadataAvailable" class="EventHandlerCommand"/>
+            <parameter code="hetr" name="for" description="The track that was parsed." type="track">
+            </parameter>
+        </event>
+
+        <event name="current track changed" code="embrhe01" description="This handler is called when Embrace changes the current track.">
+            <cocoa name="CurrentTrackChanged" class="EventHandlerCommand"/>
+        </event>
+
+        <event name="tracks changed" code="embrhe02" description="This handler is called when the setlist is modified.">
+            <cocoa name="TracksChanged" class="EventHandlerCommand"/>
+        </event>
+    </suite>
+</dictionary>

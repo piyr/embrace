@@ -45,7 +45,7 @@ using terms from application "CloseEmbrace"
 			else if trackGenre is "Vals" then
 				set label of t to orange
 			else if trackGenre is "Milonga" then
-				set label of t to red
+				set label of t to purple
 			end if
 			
 			set curIdx to current index

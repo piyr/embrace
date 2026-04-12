@@ -1,0 +1,121 @@
+---
+triple:          'x86_64-apple-darwin'
+binary-path:     '/Users/prashantiyer/Documents/embrace/build/Profile/EmbraceWorker.xpc/Contents/MacOS/EmbraceWorker'
+relocations:
+  - { offset: 0x27, size: 0x8, addend: 0x0, symName: '-[MetadataParser initWithURL:fallbackTitle:]', symObjAddr: 0x0, symBinAddr: 0x100000F80, symSize: 0xA1 }
+  - { offset: 0x7A, size: 0x8, addend: 0x0, symName: _sGenreList, symObjAddr: 0x2B20, symBinAddr: 0x1000080B0, symSize: 0x0 }
+  - { offset: 0xA5, size: 0x8, addend: 0x0, symName: _sFakeMP3Data, symObjAddr: 0x3310, symBinAddr: 0x1000078D0, symSize: 0x0 }
+  - { offset: 0x632, size: 0x8, addend: 0x0, symName: '-[MetadataParser initWithURL:fallbackTitle:]', symObjAddr: 0x0, symBinAddr: 0x100000F80, symSize: 0xA1 }
+  - { offset: 0x707, size: 0x8, addend: 0x0, symName: '-[MetadataParser _parseUsingAVAsset:intoDictionary:]', symObjAddr: 0xA1, symBinAddr: 0x100001021, symSize: 0x3C9 }
+  - { offset: 0x96B, size: 0x8, addend: 0x0, symName: '___52-[MetadataParser _parseUsingAVAsset:intoDictionary:]_block_invoke', symObjAddr: 0x46A, symBinAddr: 0x1000013EA, symSize: 0xD5 }
+  - { offset: 0xACD, size: 0x8, addend: 0x0, symName: '___52-[MetadataParser _parseUsingAVAsset:intoDictionary:]_block_invoke_2', symObjAddr: 0x53F, symBinAddr: 0x1000014BF, symSize: 0xBE7 }
+  - { offset: 0x12C0, size: 0x8, addend: 0x0, symName: _sGetYear, symObjAddr: 0x1126, symBinAddr: 0x1000020A6, symSize: 0x12B }
+  - { offset: 0x13F6, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32b, symObjAddr: 0x1251, symBinAddr: 0x1000021D1, symSize: 0x17 }
+  - { offset: 0x141C, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0x1268, symBinAddr: 0x1000021E8, symSize: 0xF }
+  - { offset: 0x1444, size: 0x8, addend: 0x0, symName: '-[MetadataParser _parseUsingAudioToolbox]', symObjAddr: 0x1277, symBinAddr: 0x1000021F7, symSize: 0x267 }
+  - { offset: 0x1740, size: 0x8, addend: 0x0, symName: '___41-[MetadataParser _parseUsingAudioToolbox]_block_invoke', symObjAddr: 0x14DE, symBinAddr: 0x10000245E, symSize: 0x179 }
+  - { offset: 0x1922, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32w, symObjAddr: 0x1657, symBinAddr: 0x1000025D7, symSize: 0x12 }
+  - { offset: 0x1948, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32w, symObjAddr: 0x1669, symBinAddr: 0x1000025E9, symSize: 0xE }
+  - { offset: 0x1965, size: 0x8, addend: 0x0, symName: '-[MetadataParser _parseID3WithBytes:length:]', symObjAddr: 0x1677, symBinAddr: 0x1000025F7, symSize: 0x24A }
+  - { offset: 0x1BE7, size: 0x8, addend: 0x0, symName: '-[MetadataParser _parseAIFFWithBytes:length:]', symObjAddr: 0x18C1, symBinAddr: 0x100002841, symSize: 0x74 }
+  - { offset: 0x1C82, size: 0x8, addend: 0x0, symName: '___45-[MetadataParser _parseAIFFWithBytes:length:]_block_invoke', symObjAddr: 0x1935, symBinAddr: 0x1000028B5, symSize: 0xAF }
+  - { offset: 0x1CF4, size: 0x8, addend: 0x0, symName: '___45-[MetadataParser _parseAIFFWithBytes:length:]_block_invoke', symObjAddr: 0x1935, symBinAddr: 0x1000028B5, symSize: 0xAF }
+  - { offset: 0x1D50, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0x19E4, symBinAddr: 0x100002964, symSize: 0xF }
+  - { offset: 0x1D7F, size: 0x8, addend: 0x0, symName: '-[MetadataParser _parseUsingCustomParsers]', symObjAddr: 0x19F3, symBinAddr: 0x100002973, symSize: 0xBF }
+  - { offset: 0x1E82, size: 0x8, addend: 0x0, symName: '-[MetadataParser metadata]', symObjAddr: 0x1AB2, symBinAddr: 0x100002A32, symSize: 0x1FC }
+  - { offset: 0x2102, size: 0x8, addend: 0x0, symName: '-[MetadataParser URL]', symObjAddr: 0x1CAE, symBinAddr: 0x100002C2E, symSize: 0xA }
+  - { offset: 0x2134, size: 0x8, addend: 0x0, symName: '-[MetadataParser fallbackTitle]', symObjAddr: 0x1CB8, symBinAddr: 0x100002C38, symSize: 0xA }
+  - { offset: 0x2166, size: 0x8, addend: 0x0, symName: '-[MetadataParser .cxx_destruct]', symObjAddr: 0x1CC2, symBinAddr: 0x100002C42, symSize: 0x33 }
+  - { offset: 0x2A95, size: 0x8, addend: 0x0, symName: _sHugLogger, symObjAddr: 0x4418, symBinAddr: 0x10000B5A0, symSize: 0x0 }
+  - { offset: 0x2BBA, size: 0x8, addend: 0x0, symName: _HugAudioBufferListCreate, symObjAddr: 0x1BF, symBinAddr: 0x100002C75, symSize: 0x86 }
+  - { offset: 0x2C8D, size: 0x8, addend: 0x0, symName: _HugAudioBufferListFree, symObjAddr: 0x245, symBinAddr: 0x100002CFB, symSize: 0x58 }
+  - { offset: 0x2D05, size: 0x8, addend: 0x0, symName: _HugLog, symObjAddr: 0x2BB, symBinAddr: 0x100002D53, symSize: 0x12C }
+  - { offset: 0x2F03, size: 0x8, addend: 0x0, symName: '-[HugAudioFile initWithFileURL:]', symObjAddr: 0x0, symBinAddr: 0x100002E7F, symSize: 0x6C }
+  - { offset: 0x35A0, size: 0x8, addend: 0x0, symName: '-[HugAudioFile initWithFileURL:]', symObjAddr: 0x0, symBinAddr: 0x100002E7F, symSize: 0x6C }
+  - { offset: 0x3625, size: 0x8, addend: 0x0, symName: '-[HugAudioFile dealloc]', symObjAddr: 0x6C, symBinAddr: 0x100002EEB, symSize: 0x98 }
+  - { offset: 0x36B3, size: 0x8, addend: 0x0, symName: '-[HugAudioFile description]', symObjAddr: 0x104, symBinAddr: 0x100002F83, symSize: 0xC1 }
+  - { offset: 0x3729, size: 0x8, addend: 0x0, symName: '-[HugAudioFile _reopenAudioFileWithURL:]', symObjAddr: 0x1C5, symBinAddr: 0x100003044, symSize: 0xDB }
+  - { offset: 0x3888, size: 0x8, addend: 0x0, symName: '-[HugAudioFile _canRead]', symObjAddr: 0x2A0, symBinAddr: 0x10000311F, symSize: 0xD7 }
+  - { offset: 0x3ADA, size: 0x8, addend: 0x0, symName: '-[HugAudioFile _convert]', symObjAddr: 0x377, symBinAddr: 0x1000031F6, symSize: 0x3F2 }
+  - { offset: 0x3F0F, size: 0x8, addend: 0x0, symName: '___24-[HugAudioFile _convert]_block_invoke', symObjAddr: 0x769, symBinAddr: 0x1000035E8, symSize: 0xE }
+  - { offset: 0x3F65, size: 0x8, addend: 0x0, symName: '-[HugAudioFile _getFileDataFormat:]', symObjAddr: 0x795, symBinAddr: 0x1000035F6, symSize: 0x5D }
+  - { offset: 0x4020, size: 0x8, addend: 0x0, symName: '-[HugAudioFile _getFileLengthFrames:]', symObjAddr: 0x7F2, symBinAddr: 0x100003653, symSize: 0x5D }
+  - { offset: 0x40BA, size: 0x8, addend: 0x0, symName: '-[HugAudioFile _setClientDataFormat:]', symObjAddr: 0x84F, symBinAddr: 0x1000036B0, symSize: 0x50 }
+  - { offset: 0x4172, size: 0x8, addend: 0x0, symName: '-[HugAudioFile _getClientDataFormat:]', symObjAddr: 0x89F, symBinAddr: 0x100003700, symSize: 0x5D }
+  - { offset: 0x420C, size: 0x8, addend: 0x0, symName: '-[HugAudioFile open]', symObjAddr: 0x8FC, symBinAddr: 0x10000375D, symSize: 0x1A2 }
+  - { offset: 0x4369, size: 0x8, addend: 0x0, symName: '-[HugAudioFile close]', symObjAddr: 0xA9E, symBinAddr: 0x1000038FF, symSize: 0x26 }
+  - { offset: 0x43B9, size: 0x8, addend: 0x0, symName: '-[HugAudioFile readFrames:intoBufferList:]', symObjAddr: 0xAC4, symBinAddr: 0x100003925, symSize: 0x91 }
+  - { offset: 0x4472, size: 0x8, addend: 0x0, symName: '-[HugAudioFile seekToFrame:]', symObjAddr: 0xB55, symBinAddr: 0x1000039B6, symSize: 0x8E }
+  - { offset: 0x451B, size: 0x8, addend: 0x0, symName: '-[HugAudioFile sampleRate]', symObjAddr: 0xBE3, symBinAddr: 0x100003A44, symSize: 0xB }
+  - { offset: 0x454E, size: 0x8, addend: 0x0, symName: '-[HugAudioFile channelCount]', symObjAddr: 0xBEE, symBinAddr: 0x100003A4F, symSize: 0x9 }
+  - { offset: 0x4581, size: 0x8, addend: 0x0, symName: '-[HugAudioFile fileLengthFrames]', symObjAddr: 0xBF7, symBinAddr: 0x100003A58, symSize: 0xA }
+  - { offset: 0x45B3, size: 0x8, addend: 0x0, symName: '-[HugAudioFile format]', symObjAddr: 0xC01, symBinAddr: 0x100003A62, symSize: 0x20 }
+  - { offset: 0x45E5, size: 0x8, addend: 0x0, symName: '-[HugAudioFile fileURL]', symObjAddr: 0xC21, symBinAddr: 0x100003A82, symSize: 0xA }
+  - { offset: 0x4617, size: 0x8, addend: 0x0, symName: '-[HugAudioFile error]', symObjAddr: 0xC2B, symBinAddr: 0x100003A8C, symSize: 0xA }
+  - { offset: 0x4649, size: 0x8, addend: 0x0, symName: '-[HugAudioFile .cxx_destruct]', symObjAddr: 0xC35, symBinAddr: 0x100003A96, symSize: 0x33 }
+  - { offset: 0x49B2, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerCreate, symObjAddr: 0x0, symBinAddr: 0x100003AC9, symSize: 0x368 }
+  - { offset: 0x49BF, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerGetLoudness, symObjAddr: 0x911, symBinAddr: 0x1000043DA, symSize: 0x1DB }
+  - { offset: 0x49E6, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerGetLoudness.sRelativeGateFactor, symObjAddr: 0x5A70, symBinAddr: 0x10000B5A8, symSize: 0x0 }
+  - { offset: 0x49FC, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerGetLoudness.sAbsoluteGateFactor, symObjAddr: 0x5A78, symBinAddr: 0x10000B5B0, symSize: 0x0 }
+  - { offset: 0x4D86, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerCreate, symObjAddr: 0x0, symBinAddr: 0x100003AC9, symSize: 0x368 }
+  - { offset: 0x4F86, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerFree, symObjAddr: 0x368, symBinAddr: 0x100003E31, symSize: 0x84 }
+  - { offset: 0x505A, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerScanAudioBuffer, symObjAddr: 0x3EC, symBinAddr: 0x100003EB5, symSize: 0x8C }
+  - { offset: 0x537C, size: 0x8, addend: 0x0, symName: ___LoudnessMeasurerScanAudioBuffer_block_invoke, symObjAddr: 0x478, symBinAddr: 0x100003F41, symSize: 0x3BE }
+  - { offset: 0x56F2, size: 0x8, addend: 0x0, symName: _sFilter, symObjAddr: 0xB22, symBinAddr: 0x1000045EB, symSize: 0x234 }
+  - { offset: 0x59F1, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerGetOverview, symObjAddr: 0x836, symBinAddr: 0x1000042FF, symSize: 0xDB }
+  - { offset: 0x5AF1, size: 0x8, addend: 0x0, symName: _LoudnessMeasurerGetPeak, symObjAddr: 0xAEC, symBinAddr: 0x1000045B5, symSize: 0x36 }
+  - { offset: 0x5DC1, size: 0x8, addend: 0x0, symName: _load, symObjAddr: 0x0, symBinAddr: 0x100004820, symSize: 0x27 }
+  - { offset: 0x5DDA, size: 0x8, addend: 0x0, symName: _HugErrorDomain, symObjAddr: 0x558, symBinAddr: 0x100008590, symSize: 0x0 }
+  - { offset: 0x5E63, size: 0x8, addend: 0x0, symName: _load, symObjAddr: 0x0, symBinAddr: 0x100004820, symSize: 0x27 }
+  - { offset: 0x5FCD, size: 0x8, addend: 0x0, symName: ___load_block_invoke, symObjAddr: 0x27, symBinAddr: 0x100004847, symSize: 0x295 }
+  - { offset: 0x62BD, size: 0x8, addend: 0x0, symName: _TrackKeyError, symObjAddr: 0x510, symBinAddr: 0x1000085D8, symSize: 0x0 }
+  - { offset: 0x62D2, size: 0x8, addend: 0x0, symName: _TrackKeyTitle, symObjAddr: 0x530, symBinAddr: 0x1000085E0, symSize: 0x0 }
+  - { offset: 0x62E7, size: 0x8, addend: 0x0, symName: _TrackKeyArtist, symObjAddr: 0x538, symBinAddr: 0x1000085E8, symSize: 0x0 }
+  - { offset: 0x62FC, size: 0x8, addend: 0x0, symName: _TrackKeyAlbum, symObjAddr: 0x540, symBinAddr: 0x1000085F0, symSize: 0x0 }
+  - { offset: 0x6311, size: 0x8, addend: 0x0, symName: _TrackKeyAlbumArtist, symObjAddr: 0x548, symBinAddr: 0x1000085F8, symSize: 0x0 }
+  - { offset: 0x6326, size: 0x8, addend: 0x0, symName: _TrackKeyComposer, symObjAddr: 0x550, symBinAddr: 0x100008600, symSize: 0x0 }
+  - { offset: 0x633B, size: 0x8, addend: 0x0, symName: _TrackKeyStartTime, symObjAddr: 0x558, symBinAddr: 0x100008608, symSize: 0x0 }
+  - { offset: 0x6350, size: 0x8, addend: 0x0, symName: _TrackKeyStopTime, symObjAddr: 0x560, symBinAddr: 0x100008610, symSize: 0x0 }
+  - { offset: 0x6365, size: 0x8, addend: 0x0, symName: _TrackKeyInitialKey, symObjAddr: 0x568, symBinAddr: 0x100008618, symSize: 0x0 }
+  - { offset: 0x637A, size: 0x8, addend: 0x0, symName: _TrackKeyTrackLoudness, symObjAddr: 0x578, symBinAddr: 0x100008620, symSize: 0x0 }
+  - { offset: 0x638F, size: 0x8, addend: 0x0, symName: _TrackKeyTrackPeak, symObjAddr: 0x580, symBinAddr: 0x100008628, symSize: 0x0 }
+  - { offset: 0x63A4, size: 0x8, addend: 0x0, symName: _TrackKeyOverviewData, symObjAddr: 0x588, symBinAddr: 0x100008630, symSize: 0x0 }
+  - { offset: 0x63B9, size: 0x8, addend: 0x0, symName: _TrackKeyOverviewRate, symObjAddr: 0x590, symBinAddr: 0x100008638, symSize: 0x0 }
+  - { offset: 0x63CE, size: 0x8, addend: 0x0, symName: _TrackKeyBPM, symObjAddr: 0x598, symBinAddr: 0x100008640, symSize: 0x0 }
+  - { offset: 0x63E3, size: 0x8, addend: 0x0, symName: _TrackKeyGrouping, symObjAddr: 0x5A8, symBinAddr: 0x100008648, symSize: 0x0 }
+  - { offset: 0x63F8, size: 0x8, addend: 0x0, symName: _TrackKeyComments, symObjAddr: 0x5B0, symBinAddr: 0x100008650, symSize: 0x0 }
+  - { offset: 0x640D, size: 0x8, addend: 0x0, symName: _TrackKeyEnergyLevel, symObjAddr: 0x5B8, symBinAddr: 0x100008658, symSize: 0x0 }
+  - { offset: 0x6422, size: 0x8, addend: 0x0, symName: _TrackKeyGenre, symObjAddr: 0x5C0, symBinAddr: 0x100008660, symSize: 0x0 }
+  - { offset: 0x6437, size: 0x8, addend: 0x0, symName: _TrackKeyYear, symObjAddr: 0x5C8, symBinAddr: 0x100008668, symSize: 0x0 }
+  - { offset: 0x644C, size: 0x8, addend: 0x0, symName: _TrackKeyDuration, symObjAddr: 0x5D0, symBinAddr: 0x100008670, symSize: 0x0 }
+  - { offset: 0x6461, size: 0x8, addend: 0x0, symName: _TrackKeyDecodedDuration, symObjAddr: 0x5D8, symBinAddr: 0x100008678, symSize: 0x0 }
+  - { offset: 0x6491, size: 0x8, addend: 0x0, symName: '+[Worker initialize]', symObjAddr: 0x0, symBinAddr: 0x100004ADC, symSize: 0x16 }
+  - { offset: 0x64AA, size: 0x8, addend: 0x0, symName: _sMetadataQueue, symObjAddr: 0xA0B0, symBinAddr: 0x10000B5B8, symSize: 0x0 }
+  - { offset: 0x64F9, size: 0x8, addend: 0x0, symName: _sLibraryQueue, symObjAddr: 0xA0B8, symBinAddr: 0x10000B5C0, symSize: 0x0 }
+  - { offset: 0x650E, size: 0x8, addend: 0x0, symName: _sLoudnessImmediateQueue, symObjAddr: 0xA0C0, symBinAddr: 0x10000B5C8, symSize: 0x0 }
+  - { offset: 0x6523, size: 0x8, addend: 0x0, symName: _sLoudnessBackgroundQueue, symObjAddr: 0xA0C8, symBinAddr: 0x10000B5D0, symSize: 0x0 }
+  - { offset: 0x6538, size: 0x8, addend: 0x0, symName: _sCancelledUUIDs, symObjAddr: 0xA0D0, symBinAddr: 0x10000B5D8, symSize: 0x0 }
+  - { offset: 0x6591, size: 0x8, addend: 0x0, symName: _sLoudnessUUIDs, symObjAddr: 0xA0D8, symBinAddr: 0x10000B5E0, symSize: 0x0 }
+  - { offset: 0x659A, size: 0x8, addend: 0x0, symName: '+[Worker initialize]', symObjAddr: 0x0, symBinAddr: 0x100004ADC, symSize: 0x16 }
+  - { offset: 0x65BF, size: 0x8, addend: 0x0, symName: _initialize.onceToken, symObjAddr: 0xA0E0, symBinAddr: 0x10000B5E8, symSize: 0x0 }
+  - { offset: 0x6636, size: 0x8, addend: 0x0, symName: _sWorkerDelegate, symObjAddr: 0xA0E8, symBinAddr: 0x10000B5F0, symSize: 0x0 }
+  - { offset: 0x6C3A, size: 0x8, addend: 0x0, symName: '+[Worker initialize].cold.1', symObjAddr: 0x10AF, symBinAddr: 0x100005B8B, symSize: 0x18 }
+  - { offset: 0x6C66, size: 0x8, addend: 0x0, symName: '___20+[Worker initialize]_block_invoke', symObjAddr: 0x16, symBinAddr: 0x100004AF2, symSize: 0xF3 }
+  - { offset: 0x6D52, size: 0x8, addend: 0x0, symName: '-[Worker cancelUUID:]', symObjAddr: 0x109, symBinAddr: 0x100004BE5, symSize: 0x19 }
+  - { offset: 0x6D9E, size: 0x8, addend: 0x0, symName: '-[Worker performTrackCommand:UUID:bookmarkData:originalFilename:reply:]', symObjAddr: 0x122, symBinAddr: 0x100004BFE, symSize: 0x226 }
+  - { offset: 0x70EA, size: 0x8, addend: 0x0, symName: '___71-[Worker performTrackCommand:UUID:bookmarkData:originalFilename:reply:]_block_invoke', symObjAddr: 0x348, symBinAddr: 0x100004E24, symSize: 0xF3 }
+  - { offset: 0x7235, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40s48s56b, symObjAddr: 0x43B, symBinAddr: 0x100004F17, symSize: 0x4B }
+  - { offset: 0x727C, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s48s56s, symObjAddr: 0x486, symBinAddr: 0x100004F62, symSize: 0x33 }
+  - { offset: 0x75F1, size: 0x8, addend: 0x0, symName: '___71-[Worker performTrackCommand:UUID:bookmarkData:originalFilename:reply:]_block_invoke.13', symObjAddr: 0x4B9, symBinAddr: 0x100004F95, symSize: 0x47A }
+  - { offset: 0x7ADA, size: 0x8, addend: 0x0, symName: '___71-[Worker performTrackCommand:UUID:bookmarkData:originalFilename:reply:]_block_invoke_2', symObjAddr: 0x933, symBinAddr: 0x10000540F, symSize: 0x13 }
+  - { offset: 0x7B2C, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40b, symObjAddr: 0x946, symBinAddr: 0x100005422, symSize: 0x30 }
+  - { offset: 0x7B5D, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s, symObjAddr: 0x976, symBinAddr: 0x100005452, symSize: 0x25 }
+  - { offset: 0x7B90, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40s48b, symObjAddr: 0x99B, symBinAddr: 0x100005477, symSize: 0x44 }
+  - { offset: 0x7BCC, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s48s, symObjAddr: 0x9DF, symBinAddr: 0x1000054BB, symSize: 0x2C }
+  - { offset: 0x7C0A, size: 0x8, addend: 0x0, symName: '-[Worker performLibraryParseWithReply:]', symObjAddr: 0xA0B, symBinAddr: 0x1000054E7, symSize: 0x9B }
+  - { offset: 0x7CA5, size: 0x8, addend: 0x0, symName: '___39-[Worker performLibraryParseWithReply:]_block_invoke', symObjAddr: 0xAA6, symBinAddr: 0x100005582, symSize: 0x4AB }
+  - { offset: 0x7FA8, size: 0x8, addend: 0x0, symName: '___39-[Worker performLibraryParseWithReply:]_block_invoke_2', symObjAddr: 0xF51, symBinAddr: 0x100005A2D, symSize: 0x13 }
+  - { offset: 0x7FFA, size: 0x8, addend: 0x0, symName: '-[Worker .cxx_destruct]', symObjAddr: 0xF64, symBinAddr: 0x100005A40, symSize: 0x10 }
+  - { offset: 0x802A, size: 0x8, addend: 0x0, symName: '-[WorkerDelegate listener:shouldAcceptNewConnection:]', symObjAddr: 0xF74, symBinAddr: 0x100005A50, symSize: 0xB6 }
+  - { offset: 0x811C, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x102A, symBinAddr: 0x100005B06, symSize: 0x85 }
+...
