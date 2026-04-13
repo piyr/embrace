@@ -1,0 +1,7 @@
+# Scratch files
+.gemini/
+Build/
+a.scpt
+test_script.applescript
+build.log
+test*
