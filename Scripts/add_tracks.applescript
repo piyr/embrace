@@ -33,6 +33,7 @@ else:
 		end repeat
 	end repeat
 	
+<<<<<<< HEAD
 	-- Due to AppDelegate.m's 'application:openFiles:' reversed enumeration behavior 
 	-- when receiving generic files from LaunchServices, we must reverse our payload
 	-- before sending it so it successfully cancels out and plays chronologically!
@@ -43,6 +44,12 @@ else:
 	
 	tell application "CloseEmbrace"
 		open reversedFileList
+=======
+	tell application "CloseEmbrace"
+		-- The standard macOS 'open' Apple Event is natively handled via CloseEmbrace's 
+		-- AppDelegate 'openFiles:' delegate, which natively passes it straight to the setlist!
+		open fileList
+>>>>>>> b56271bcc5f6de24ca63dec58d5301c188df3ea2
 	end tell
 	
 	log "Successfully queued " & (count of fileList) & " tracks to CloseEmbrace!"
