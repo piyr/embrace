@@ -35,6 +35,7 @@ typedef NS_ENUM(NSInteger, PlaybackAction) {
 - (IBAction) toggleStopsAfterPlaying:(id)sender;
 - (IBAction) toggleMarkAsPlayed:(id)sender;
 - (IBAction) showGearMenu:(id)sender;
+- (IBAction) cancelCortinaTimerForTrack:(id)sender;
 
 - (void) clear;
 - (void) resetPlayedTracks;

@@ -67,6 +67,10 @@
     NSArray            *_dotConstraints;
     NSLayoutConstraint *_dotRightConstraint;
 
+    NSButton           *_cancelCortinaButton;
+    NSArray            *_cancelCortinaConstraints;
+    NSLayoutConstraint *_cancelCortinaRightConstraint;
+
     NSTrackingArea *_trackingArea;
     BOOL            _mouseInside;
     BOOL            _timeRequested;
@@ -328,7 +332,8 @@
         @"beatsPerMinute",
         @"trackStatus",
         @"trackLabel",
-        @"duplicate"
+        @"duplicate",
+        @"cortinaTimerActive"
     ];
     
     _observedObject = objectValue;
@@ -380,6 +385,12 @@
 - (void) _errorButtonClicked:(id)sender
 {
     [GetAppDelegate() displayErrorForTrack:[self track]];
+}
+
+
+- (void) _cancelCortinaTimerClicked:(id)sender
+{
+    [NSApp sendAction:@selector(cancelCortinaTimerForTrack:) to:nil from:[self track]];
 }
 
 
@@ -474,6 +485,7 @@
 
     BOOL showsDuplicateIcon = [[Preferences sharedInstance] showsDuplicateStatus] && [[self track] isDuplicate];
     BOOL showsDot           = [[Preferences sharedInstance] showsLabelDots] && (trackLabel != TrackLabelNone);
+    BOOL showsCancel        = [[self track] cortinaTimerActive];
 
     if (showsDuplicateIcon && !_duplicateImageView) {
         NSImage *image = [NSImage imageNamed:@"DuplicateTemplate"];
@@ -532,21 +544,58 @@
     }
 
 
-    NSInteger constant = 8;
-    
-    if (showsDuplicateIcon && showsDot) {
-        constant = 28 + 4;
-        [_duplicateRightConstraint setConstant:-18];
-        [_dotRightConstraint setConstant:-4];
+    if (showsCancel && !_cancelCortinaButton) {
+        NSImage *image = [NSImage imageNamed:NSImageNameStopProgressTemplate];
+        _cancelCortinaButton = [[NSButton alloc] initWithFrame:CGRectMake(0, 0, 12, 12)];
+        [_cancelCortinaButton setTranslatesAutoresizingMaskIntoConstraints:NO];
+        [_cancelCortinaButton setBordered:NO];
+        [_cancelCortinaButton setImagePosition:NSImageOnly];
+        [[_cancelCortinaButton cell] setImageScaling:NSImageScaleProportionallyDown];
+        [_cancelCortinaButton setImage:image];
+        [_cancelCortinaButton setTarget:self];
+        [_cancelCortinaButton setAction:@selector(_cancelCortinaTimerClicked:)];
+        [[_durationField superview] addSubview:_cancelCortinaButton positioned:NSWindowBelow relativeTo:nil];
 
-    } else if (showsDuplicateIcon) {
-        constant = 18;
-        [_duplicateRightConstraint setConstant:-4];
+        _cancelCortinaRightConstraint = [NSLayoutConstraint constraintWithItem:_cancelCortinaButton attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:_durationField attribute:NSLayoutAttributeLeft multiplier:1.0 constant:-4.0];
 
-    } else if (showsDot) {
-        constant = 8;
-        [_dotRightConstraint setConstant:-4];
+        _cancelCortinaConstraints = @[
+            _cancelCortinaRightConstraint,
+            [NSLayoutConstraint constraintWithItem:_cancelCortinaButton attribute:NSLayoutAttributeTop      relatedBy:NSLayoutRelationEqual toItem:_durationField attribute:NSLayoutAttributeTop     multiplier:1.0 constant:2.5],
+            [NSLayoutConstraint constraintWithItem:_cancelCortinaButton attribute:NSLayoutAttributeWidth    relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:12.0],
+            [NSLayoutConstraint constraintWithItem:_cancelCortinaButton attribute:NSLayoutAttributeHeight   relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:12.0]
+        ];
+
+        [NSLayoutConstraint activateConstraints:_cancelCortinaConstraints];
+
+    } else if (!showsCancel && _cancelCortinaButton) {
+        [_cancelCortinaButton removeFromSuperview];
+        _cancelCortinaButton = nil;
+
+        [NSLayoutConstraint deactivateConstraints:_cancelCortinaConstraints];
+        _cancelCortinaConstraints = nil;
+        _cancelCortinaRightConstraint = nil;
     }
+
+
+    NSInteger constant = 8;
+    NSInteger spacingUsed = 0;
+    
+    if (showsCancel) {
+        [_cancelCortinaRightConstraint setConstant: -(4 + spacingUsed)];
+        spacingUsed += 16;
+    }
+    
+    if (showsDuplicateIcon) {
+        [_duplicateRightConstraint setConstant: -(4 + spacingUsed)];
+        spacingUsed += 14;
+    }
+    
+    if (showsDot) {
+        [_dotRightConstraint setConstant: -(4 + spacingUsed)];
+        spacingUsed += 14;
+    }
+
+    constant = 8 + spacingUsed;
 
     if (showsDot) {
         [_dotLabelView setLabel:trackLabel];
@@ -609,6 +658,9 @@
 
     [_duplicateImageView setTintColor:primaryColor];
     [_speakerImageView   setTintColor:primaryColor];
+    if (@available(macOS 10.14, *)) {
+        [_cancelCortinaButton setContentTintColor:primaryColor];
+    }
     
     if (rowIsSelected && rowIsEmphasized) {
         [_errorButton setNormalColor:primaryColor];

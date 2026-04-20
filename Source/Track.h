@@ -66,6 +66,7 @@ typedef NS_ENUM(NSInteger, TrackLabel) {
 @property (nonatomic) TrackStatus trackStatus;
 @property (nonatomic) BOOL stopsAfterPlaying;
 @property (nonatomic) BOOL ignoresAutoGap;
+@property (nonatomic) BOOL cortinaTimerActive;
 
 @property (nonatomic) NSTimeInterval expectedDuration;
 

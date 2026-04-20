@@ -80,6 +80,10 @@ static NSInteger sAutoGapMaximum = 16;
     double     _volumeBeforeKeyboard;
     BOOL       _confirmStop;
     BOOL       _willCalculateStartAndEndTimes;
+
+    NSTimer   *_cortinaStopTimer;
+    NSTimer   *_cortinaPlayTimer;
+    BOOL       _isAutoFadingCortina;
 }
 
 
@@ -96,6 +100,7 @@ static NSInteger sAutoGapMaximum = 16;
 - (void) dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[Player sharedInstance] removeObserver:self forKeyPath:@"currentTrack"];
 }
 
 
@@ -526,12 +531,80 @@ static NSInteger sAutoGapMaximum = 16;
 }
 
 
+#pragma mark - Cortina Auto-Fade
+
+- (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([keyPath isEqualToString:@"currentTrack"] && [[Player sharedInstance] isPlaying]) {
+        [self _checkCortinaStatus];
+    }
+}
+
+- (void) _checkCortinaStatus
+{
+    if (!_isAutoFadingCortina) {
+        [self _cancelCortinaTimers];
+        
+        Track *currentTrack = [[Player sharedInstance] currentTrack];
+        if ([[currentTrack genre] caseInsensitiveCompare:@"Cortina"] == NSOrderedSame) {
+            [currentTrack setCortinaTimerActive:YES];
+            _cortinaStopTimer = [NSTimer scheduledTimerWithTimeInterval:80.0 target:self selector:@selector(_handleCortinaStopTimer:) userInfo:nil repeats:NO];
+        }
+    }
+}
+
+- (void) _cancelCortinaTimers
+{
+    [_cortinaStopTimer invalidate];
+    _cortinaStopTimer = nil;
+
+    [_cortinaPlayTimer invalidate];
+    _cortinaPlayTimer = nil;
+
+    Track *currentTrack = [[Player sharedInstance] currentTrack];
+    if ([currentTrack cortinaTimerActive]) {
+        [currentTrack setCortinaTimerActive:NO];
+    }
+}
+
+- (void) _handleCortinaStopTimer:(NSTimer *)timer
+{
+    _isAutoFadingCortina = YES;
+    
+    Track *currentTrack = [[Player sharedInstance] currentTrack];
+    [currentTrack setCortinaTimerActive:NO];
+
+    [[Player sharedInstance] fadeStop];
+
+    _cortinaPlayTimer = [NSTimer scheduledTimerWithTimeInterval:10.0 target:self selector:@selector(_handleCortinaPlayTimer:) userInfo:nil repeats:NO];
+}
+
+- (void) _handleCortinaPlayTimer:(NSTimer *)timer
+{
+    _isAutoFadingCortina = NO;
+    
+    [[Player sharedInstance] play];
+}
+
+- (IBAction) cancelCortinaTimerForTrack:(id)sender
+{
+    Track *currentTrack = [[Player sharedInstance] currentTrack];
+    if ([sender isEqual:currentTrack]) {
+        [self _cancelCortinaTimers];
+        _isAutoFadingCortina = NO;
+    }
+}
+
+
 #pragma mark - Public Methods
 
 - (void) clear
 {
     EmbraceLogReopenLogFile();
     EmbraceLog(@"SetlistController", @"-clear");
+
+    [self _cancelCortinaTimers];
+    _isAutoFadingCortina = NO;
 
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:sSavedAtKey];
 
@@ -764,6 +837,9 @@ static NSInteger sAutoGapMaximum = 16;
 - (IBAction) performPreferredPlaybackAction:(id)sender
 {
     EmbraceLogMethod();
+
+    [self _cancelCortinaTimers];
+    _isAutoFadingCortina = NO;
 
     PlaybackAction action = [self preferredPlaybackAction];
 
@@ -1055,6 +1131,7 @@ static NSInteger sAutoGapMaximum = 16;
 
     [player addListener:self];
     [player setTrackProvider:self];
+    [player addObserver:self forKeyPath:@"currentTrack" options:0 context:nil];
 
     [self player:player didUpdatePlaying:NO];
 }
@@ -1065,6 +1142,8 @@ static NSInteger sAutoGapMaximum = 16;
     EmbraceLog(@"SetlistController", @"player:didUpdatePlaying:%ld", (long)playing);
 
     if (playing) {
+        [self _checkCortinaStatus];
+
         [[self dangerView] setMetering:YES];
         [[self meterView] setMetering:YES];
         [[self playBar] setPlaying:YES];
@@ -1073,6 +1152,10 @@ static NSInteger sAutoGapMaximum = 16;
         [[self playRemainingField] setHidden:NO];
         
     } else {
+        if (!_isAutoFadingCortina) {
+            [self _cancelCortinaTimers];
+        }
+
         [[self playOffsetField] setStringValue:GetStringForTime(0)];
         [[self playRemainingField] setStringValue:GetStringForTime(0)];
 
@@ -1105,6 +1188,9 @@ static NSInteger sAutoGapMaximum = 16;
 
 - (void) player:(Player *)player didInterruptPlaybackWithReason:(PlayerInterruptionReason)reason
 {
+    [self _cancelCortinaTimers];
+    _isAutoFadingCortina = NO;
+
     NSString *messageText = NSLocalizedString(@"Another application interrupted playback.", nil);
 
     HugAudioDevice *device = [[Preferences sharedInstance] mainOutputAudioDevice];

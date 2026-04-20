@@ -76,21 +76,6 @@ using terms from application "CloseEmbrace"
 			if current track is not missing value then
 				if genre of current track is "Cortina" then
 					set bypassed of every effect to true
-					-- Run the non-blocking dialog in a background shell process
-					-- so the main thread of CloseEmbrace is never frozen.
-					do shell script "osascript -e '
-						try
-							tell application \"System Events\"
-								activate
-								set dlg to display dialog \"Cortina timer running. Stop in 80s?\" buttons {\"Cancel Timer\"} default button 1 giving up after 80
-							end tell
-							if gave up of dlg is true then
-								tell application \"CloseEmbrace\" to stop
-								delay 8
-								tell application \"CloseEmbrace\" to play
-							end if
-						end try
-					' > /dev/null 2>&1 &"
 				else
 					set bypassed of every effect to false
 				end if
