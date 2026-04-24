@@ -101,6 +101,7 @@ static NSInteger sAutoGapMaximum = 16;
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[Player sharedInstance] removeObserver:self forKeyPath:@"currentTrack"];
+    [self _cancelCortinaTimers];
 }
 
 

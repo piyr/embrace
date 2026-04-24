@@ -487,7 +487,7 @@
     BOOL showsDot           = [[Preferences sharedInstance] showsLabelDots] && (trackLabel != TrackLabelNone);
     BOOL showsCancel        = [[self track] cortinaTimerActive];
 
-    if (showsDuplicateIcon && !_duplicateImageView) {
+    if (!_duplicateImageView) {
         NSImage *image = [NSImage imageNamed:@"DuplicateTemplate"];
         [image setTemplate:YES];
         
@@ -504,18 +504,12 @@
         ];
 
         [NSLayoutConstraint activateConstraints:_duplicateConstraints];
-
-    } else if (!showsDuplicateIcon && _duplicateImageView) {
-        [_duplicateImageView removeFromSuperview];
-        _duplicateImageView = nil;
-        
-        [NSLayoutConstraint deactivateConstraints:_duplicateConstraints];
-        _duplicateConstraints = nil;
-        _duplicateRightConstraint = nil;
     }
 
+    [_duplicateImageView setHidden:!showsDuplicateIcon];
 
-    if (showsDot && !_dotLabelView) {
+
+    if (!_dotLabelView) {
         _dotLabelView = [[TrackLabelView alloc] initWithFrame:CGRectMake(0, 0, 20, 20)];
         [_dotLabelView setStyle:TrackLabelViewDot];
         [_dotLabelView setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -532,19 +526,12 @@
         ];
 
         [NSLayoutConstraint activateConstraints:_dotConstraints];
-
-        
-    } else if (!showsDot && _dotLabelView) {
-        [_dotLabelView removeFromSuperview];
-        _dotLabelView = nil;
-        
-        [NSLayoutConstraint deactivateConstraints:_dotConstraints];
-        _dotConstraints = nil;
-        _dotRightConstraint = nil;
     }
 
+    [_dotLabelView setHidden:!showsDot];
 
-    if (showsCancel && !_cancelCortinaButton) {
+
+    if (!_cancelCortinaButton) {
         NSImage *image = [NSImage imageNamed:NSImageNameStopProgressTemplate];
         _cancelCortinaButton = [[NSButton alloc] initWithFrame:CGRectMake(0, 0, 12, 12)];
         [_cancelCortinaButton setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -566,15 +553,9 @@
         ];
 
         [NSLayoutConstraint activateConstraints:_cancelCortinaConstraints];
-
-    } else if (!showsCancel && _cancelCortinaButton) {
-        [_cancelCortinaButton removeFromSuperview];
-        _cancelCortinaButton = nil;
-
-        [NSLayoutConstraint deactivateConstraints:_cancelCortinaConstraints];
-        _cancelCortinaConstraints = nil;
-        _cancelCortinaRightConstraint = nil;
     }
+
+    [_cancelCortinaButton setHidden:!showsCancel];
 
 
     NSInteger constant = 8;
