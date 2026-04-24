@@ -39,13 +39,11 @@ using terms from application "CloseEmbrace"
 		tell application "CloseEmbrace"
 			set trackGenre to genre of t
 			if trackGenre is "Cortina" then
-				set label of t to green
+				set label of t to red
 			else if trackGenre is "Tango" then
 				set label of t to blue
-			else if trackGenre is "Vals" then
+			else if trackGenre is "Vals" or trackGenre is "Milonga" then
 				set label of t to orange
-			else if trackGenre is "Milonga" then
-				set label of t to purple
 			end if
 			
 			set curIdx to current index
