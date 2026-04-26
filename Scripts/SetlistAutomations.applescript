@@ -40,6 +40,10 @@ using terms from application "CloseEmbrace"
 			set trackGenre to genre of t
 			if trackGenre is "Cortina" then
 				set label of t to red
+			else if trackGenre is "Milonga" then
+				set label of t to blue
+			else if trackGenre is "Vals" then
+				set label of t to green
 			else
 				set label of t to none
 			end if
