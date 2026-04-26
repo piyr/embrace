@@ -1,0 +1,11 @@
+Refactor: Migrate Cortina timer functionality to native runtime
+
+The AppleScript implementation for handling timeouts on Cortina tracks was highly fragile, relying on spawned background `osascript` processes that easily desynchronized under manual interruption.
+
+This commit natively integrates the automated Cortina cycle directly into `SetlistController` acting across the core GCD runloop.
+
+Key structural changes:
+- `Track` runtime model now emits Key-Value Observable notifications for `cortinaTimerActive`, triggering dynamic constraint layout logic on individual track representations.
+- `SetlistController` now tracks `[[Player sharedInstance] currentTrack]` transitions over continuous gapless play sequences via KVO. Upon detecting a `"Cortina"` genre, it allocates the 80.0-second `.cortinaStopTimer` sequence, triggering a native fading stop and enforcing a 10.0-second delay.
+- Manual control overrides via `performPreferredPlaybackAction:` automatically sever execution bounds on both structural timers to avoid context misalignment.
+- `TrackTableCellView` injects an unbordered cancellation UI (`NSImageNameStopProgressTemplate`) dynamic to the `cortinaTimerActive` state. Applying `NSImageScaleProportionallyDown` and OS-level matching via `setContentTintColor:`, its layout binds seamlessly into the track view matrix and broadcasts `.cancelCortinaTimerForTrack:` dynamically back up the first responder chain.

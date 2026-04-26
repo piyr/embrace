@@ -1462,7 +1462,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Close Embrace";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
-				MARKETING_VERSION = 4.0.1.1;
+				MARKETING_VERSION = 4.0.2.0;
 				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
@@ -1475,7 +1475,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Close Embrace";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
-				MARKETING_VERSION = 4.0.1.1;
+				MARKETING_VERSION = 4.0.2.0;
 				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Profile;
@@ -1525,7 +1525,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Close Embrace";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
-				MARKETING_VERSION = 4.0.1.1;
+				MARKETING_VERSION = 4.0.2.0;
 				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Release;
@@ -1575,7 +1575,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Close Embrace";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
-				MARKETING_VERSION = 4.0.1.1;
+				MARKETING_VERSION = 4.0.2.0;
 				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Submission;
