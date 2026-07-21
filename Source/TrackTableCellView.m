@@ -4,6 +4,7 @@
 #import "TrackTableCellView.h"
 
 #import "Track.h"
+#import "Player.h"
 #import "TrackErrorButton.h"
 #import "AppDelegate.h"
 #import "NoDropImageView.h"
@@ -881,7 +882,22 @@
     
     NSString *durationString = GetStringForTime(round([track playDuration]));
     if (!durationString) durationString = @"";
+
+    Player *player = [Player sharedInstance];
+    if ([player currentTrack] == track && [player isPlaying]) {
+        NSString *rateStr = [player playbackRateString];
+        if ([rateStr length] > 0) {
+            durationString = [durationString stringByAppendingFormat:@" (%@)", rateStr];
+        }
+    }
+
     [[self durationField] setStringValue:durationString];
+}
+
+
+- (void) updateDurationDisplay
+{
+    [self _updateFieldStrings];
 }
 
 

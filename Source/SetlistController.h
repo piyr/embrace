@@ -27,6 +27,10 @@ typedef NS_ENUM(NSInteger, PlaybackAction) {
 - (IBAction) increaseAutoGap:(id)sender;
 - (IBAction) decreaseAutoGap:(id)sender;
 
+- (IBAction) increasePlaybackSpeed:(id)sender;
+- (IBAction) decreasePlaybackSpeed:(id)sender;
+- (IBAction) resetPlaybackSpeed:(id)sender;
+
 - (IBAction) showEffects:(id)sender;
 - (IBAction) showCurrentTrack:(id)sender;
 

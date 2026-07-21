@@ -17,6 +17,7 @@
 #import "HugAudioSource.h"
 
 #import <AVFoundation/AVFoundation.h>
+#import <AudioToolbox/AudioUnitParameters.h>
 
 #include <stdatomic.h>
 
@@ -156,6 +157,8 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     NSTimeInterval    _lastOverloadTime;
 
     NSArray<AUAudioUnit *> *_effectAudioUnits;
+    AUAudioUnit            *_timePitchAudioUnit;
+    float                   _volume;
 }
 
 
@@ -188,6 +191,19 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         
         _statusRingBuffer = HugRingBufferCreate(8196);
         _errorRingBuffer  = HugRingBufferCreate(8196);
+
+        AudioComponentDescription timePitchCD = {
+            kAudioUnitType_FormatConverter,
+            kAudioUnitSubType_NewTimePitch,
+            kAudioUnitManufacturer_Apple,
+            0,
+            0
+        };
+        NSError *timePitchError = nil;
+        _timePitchAudioUnit = [[AUAudioUnit alloc] initWithComponentDescription:timePitchCD error:&timePitchError];
+        if (timePitchError) {
+            HugLog(@"HugAudioEngine", @"Error instantiating NewTimePitch: %@", timePitchError);
+        }
     }
 
     return self;
@@ -460,6 +476,30 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         
         [_outputSettings objectForKey:HugAudioSettingFrameSize];
         
+        if (_timePitchAudioUnit) {
+            NSError *error = nil;
+            if (![_timePitchAudioUnit renderResourcesAllocated] || ([_timePitchAudioUnit maximumFramesToRender] != frameSize)) {
+                [_timePitchAudioUnit deallocateRenderResources];
+                [_timePitchAudioUnit setMaximumFramesToRender:frameSize];
+                
+                AUAudioUnitBus *inputBus  = [[_timePitchAudioUnit inputBusses]  objectAtIndexedSubscript:0];
+                AUAudioUnitBus *outputBus = [[_timePitchAudioUnit outputBusses] objectAtIndexedSubscript:0];
+                
+                if (!error) [inputBus  setFormat:format error:&error];
+                if (!error) [outputBus setFormat:format error:&error];
+                if (!error) [_timePitchAudioUnit allocateRenderResourcesAndReturnError:&error];
+                
+                [inputBus setEnabled:YES];
+                [outputBus setEnabled:YES];
+            }
+            
+            if (error) {
+                HugLog(@"HugAudioEngine", @"Error when configuring timePitch: %@", error);
+            } else {
+                [graph addAudioUnit:_timePitchAudioUnit];
+            }
+        }
+        
         for (AUAudioUnit *unit in _effectAudioUnits) {
             NSError *error = nil;
 
@@ -498,7 +538,7 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
             timestamp->mHostTime :
             HugGetCurrentHostTime();
         
-        size_t meterFrameCount = HugLevelMeterGetMaxFrameCount(_leftLevelMeter);
+        size_t meterFrameCount = HugLevelMeterGetMaxFrameCount(leftLevelMeter);
         
         NSInteger offset = 0;
         NSInteger framesRemaining = inNumberFrames;
@@ -737,6 +777,7 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     }
     
     [self _sendAudioSourceToRenderThread:source];
+    _renderUserInfo.volume = _volume;
 
     HugLog(@"HugAudioEngine", @"setup complete, starting output");
 
@@ -765,9 +806,15 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 {
     _HugCrashPadEnabled = NO;
 
+    _renderUserInfo.volume = 0;
+
     if ([self _isRunning]) {
         [self _sendAudioSourceToRenderThread:nil];
         [self performSelector:@selector(_reallyStopHardware) withObject:nil afterDelay:30];
+    }
+
+    if (_timePitchAudioUnit) {
+        [_timePitchAudioUnit reset];
     }
 
     HugRingBufferConfirmReadAll(_statusRingBuffer);
@@ -811,7 +858,19 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
 - (void) updateVolume:(float)volume
 {
-    _renderUserInfo.volume = volume;
+    _volume = volume;
+    if (_playbackStatus != HugPlaybackStatusStopped) {
+        _renderUserInfo.volume = volume;
+    }
+}
+
+
+- (void) updatePlaybackRate:(double)rate
+{
+    if (_timePitchAudioUnit) {
+        AUParameter *rateParam = [[_timePitchAudioUnit parameterTree] parameterWithID:0 scope:kAudioUnitScope_Global element:0];
+        [rateParam setValue:rate];
+    }
 }
 
 

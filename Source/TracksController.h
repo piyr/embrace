@@ -39,6 +39,7 @@ extern NSString *EmbraceQueuedTrackPasteboardType;
 - (BOOL) acceptDrop:(id <NSDraggingInfo>)info row:(NSInteger)row dropOperation:(NSTableViewDropOperation)dropOperation;
 
 - (void) didFinishTrack:(Track *)finishedTrack;
+- (void) updatePlayingTrackCell;
 
 - (Track *) trackAtIndex:(NSUInteger)index;
 @property (nonatomic, readonly) NSArray *tracks;

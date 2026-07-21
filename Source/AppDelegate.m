@@ -188,6 +188,44 @@
 
     [self _handlePreferencesDidChange:nil];
 
+    NSMenu *controlsMenu = nil;
+    for (NSMenuItem *topItem in [[NSApp mainMenu] itemArray]) {
+        if ([topItem hasSubmenu]) {
+            for (NSMenuItem *subItem in [[topItem submenu] itemArray]) {
+                if ([subItem action] == @selector(performPreferredPlaybackAction:)) {
+                    controlsMenu = [topItem submenu];
+                    break;
+                }
+            }
+        }
+        if (controlsMenu) break;
+    }
+
+    if (controlsMenu) {
+        [controlsMenu addItem:[NSMenuItem separatorItem]];
+        
+        NSMenuItem *speedUpItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Increase Speed (+0.5%)", nil)
+                                                             action:@selector(increasePlaybackSpeed:)
+                                                      keyEquivalent:@"j"];
+        [speedUpItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+        [speedUpItem setTarget:self];
+        [controlsMenu addItem:speedUpItem];
+        
+        NSMenuItem *speedDownItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Slow Down (-0.5%)", nil)
+                                                               action:@selector(decreasePlaybackSpeed:)
+                                                        keyEquivalent:@"k"];
+        [speedDownItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+        [speedDownItem setTarget:self];
+        [controlsMenu addItem:speedDownItem];
+        
+        NSMenuItem *resetSpeedItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Reset Speed", nil)
+                                                                action:@selector(resetPlaybackSpeed:)
+                                                         keyEquivalent:@"0"];
+        [resetSpeedItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+        [resetSpeedItem setTarget:self];
+        [controlsMenu addItem:resetSpeedItem];
+    }
+
     EmbraceLog(@"Hello", @"Embrace finished launching at %@", [NSDate date]);
 
     EmbraceLog(@"Migration", @"Current build is %@, latest build is %@.",
@@ -775,6 +813,27 @@
 - (IBAction) increaseAutoGap:(id)sender {  EmbraceLogMethod();  [_setlistController increaseAutoGap:self]; }
 - (IBAction) decreaseAutoGap:(id)sender {  EmbraceLogMethod();  [_setlistController decreaseAutoGap:self]; }
 - (IBAction) revealTime:(id)sender      {  EmbraceLogMethod();  [_setlistController revealTime:self];      }
+
+
+- (IBAction) increasePlaybackSpeed:(id)sender
+{
+    EmbraceLog(@"AppDelegate", @"increasePlaybackSpeed:  sender=%@, event=%@", sender, [NSApp currentEvent]);
+    [_setlistController increasePlaybackSpeed:self];
+}
+
+
+- (IBAction) decreasePlaybackSpeed:(id)sender
+{
+    EmbraceLog(@"AppDelegate", @"decreasePlaybackSpeed:  sender=%@, event=%@", sender, [NSApp currentEvent]);
+    [_setlistController decreasePlaybackSpeed:self];
+}
+
+
+- (IBAction) resetPlaybackSpeed:(id)sender
+{
+    EmbraceLog(@"AppDelegate", @"resetPlaybackSpeed:  sender=%@, event=%@", sender, [NSApp currentEvent]);
+    [_setlistController resetPlaybackSpeed:self];
+}
 
 
 - (IBAction) performPreferredPlaybackAction:(id)sender

@@ -32,6 +32,7 @@ static double sMaxVolume = 1.0 - (2.0 / 32767.0);
 @property (nonatomic, strong) Track *currentTrack;
 @property (nonatomic) NSString *timeElapsedString;
 @property (nonatomic) NSString *timeRemainingString;
+@property (nonatomic, copy) NSString *playbackRateString;
 @property (nonatomic) float percentage;
 @property (nonatomic) PlayerIssue issue;
 @end
@@ -64,6 +65,10 @@ static double sMaxVolume = 1.0 - (2.0 / 32767.0);
 
     NSTimeInterval _roundedTimeElapsed;
     NSTimeInterval _roundedTimeRemaining;
+
+    double          _playbackRate;
+    double          _activePlaybackRate;
+    NSTimer        *_rateRampTimer;
 }
 
 
@@ -104,6 +109,9 @@ static double sMaxVolume = 1.0 - (2.0 / 32767.0);
 
         _volume = -1;
         _engine = [[HugAudioEngine alloc] init];
+        
+        _playbackRate = 1.0;
+        _activePlaybackRate = 1.0;
         
         __weak id weakSelf = self;
         [_engine setUpdateBlock:^{ [weakSelf _handleEngineUpdate]; }];
@@ -185,6 +193,25 @@ static double sMaxVolume = 1.0 - (2.0 / 32767.0);
 }
 
 
+- (void) _updateTimeStrings
+{
+    if ([self isPlaying] && [_currentTrack didAnalyzeLoudness]) {
+        [self setTimeElapsedString:GetStringForTime(_roundedTimeElapsed)];
+        [self setTimeRemainingString:GetStringForTime(_roundedTimeRemaining)];
+    } else {
+        [self setTimeElapsedString:nil];
+        [self setTimeRemainingString:nil];
+    }
+    
+    if ([self isPlaying] && fabs(_activePlaybackRate - 1.0) > 0.0001) {
+        double pct = (_activePlaybackRate - 1.0) * 100.0;
+        [self setPlaybackRateString:[NSString stringWithFormat:@"%+.1f%%", pct]];
+    } else {
+        [self setPlaybackRateString:@""];
+    }
+}
+
+
 - (void) _handleEngineUpdate
 {
     HugPlaybackStatus playbackStatus = [_engine playbackStatus];
@@ -220,20 +247,9 @@ static double sMaxVolume = 1.0 - (2.0 / 32767.0);
         status = TrackStatusPlaying;
     }
 
-    if (!_timeElapsedString || (roundedTimeElapsed != _roundedTimeElapsed)) {
-        _roundedTimeElapsed = roundedTimeElapsed;
-        [self setTimeElapsedString:GetStringForTime(_roundedTimeElapsed)];
-    }
-
-    if (!_timeRemainingString || (roundedTimeRemaining != _roundedTimeRemaining)) {
-        _roundedTimeRemaining = roundedTimeRemaining;
-        [self setTimeRemainingString:GetStringForTime(_roundedTimeRemaining)];
-    }
-
-    // Waiting for analysis
-    if (![_currentTrack didAnalyzeLoudness]) {
-        [self setTimeElapsedString:nil];
-    }
+    _roundedTimeElapsed   = roundedTimeElapsed;
+    _roundedTimeRemaining = roundedTimeRemaining;
+    [self _updateTimeStrings];
 
     NSTimeInterval duration = _timeElapsed + _timeRemaining;
     if (!duration) duration = 1;
@@ -781,9 +797,10 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
     double progress = elapsed / duration;
 
     if (progress >= 1.0) {
+        [self setVolume:0.0];
         [self hardStop];
     } else {
-        double curve = (1.0 - progress) * (1.0 - progress);
+        double curve = 1.0 - progress;
         double newVolume = _volumeBeforeFade * curve;
         [self setVolume:newVolume];
     }
@@ -855,6 +872,85 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
         [_currentTrack setTrackStatus:TrackStatusPreparing];
 
         _timeElapsed = 0;
+        
+        [self resetPlaybackRateImmediately];
+    }
+}
+
+
+- (double) playbackRate
+{
+    return _playbackRate;
+}
+
+
+- (void) setPlaybackRate:(double)rate
+{
+    if (rate < 0.97) rate = 0.97;
+    if (rate > 1.03) rate = 1.03;
+
+    if (_playbackRate != rate) {
+        _playbackRate = rate;
+        
+        [self _startPlaybackRateRampTo:rate];
+    }
+}
+
+
+- (void) _startPlaybackRateRampTo:(double)targetRate
+{
+    [_rateRampTimer invalidate];
+    
+    double startRate = _activePlaybackRate;
+    NSTimeInterval duration = 3.0;
+    NSTimeInterval interval = 0.05;
+    NSInteger totalSteps = (NSInteger)(duration / interval);
+    __block NSInteger currentStep = 0;
+    
+    __weak typeof(self) weakSelf = self;
+    _rateRampTimer = [NSTimer scheduledTimerWithTimeInterval:interval repeats:YES block:^(NSTimer *timer) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            [timer invalidate];
+            return;
+        }
+        
+        currentStep++;
+        double progress = (double)currentStep / (double)totalSteps;
+        if (progress >= 1.0) {
+            progress = 1.0;
+            [timer invalidate];
+            strongSelf->_rateRampTimer = nil;
+        }
+        
+        double nextRate = startRate + (targetRate - startRate) * progress;
+        strongSelf->_activePlaybackRate = nextRate;
+        [strongSelf->_engine updatePlaybackRate:nextRate];
+        [strongSelf _updateTimeStrings];
+        
+        for (id<PlayerListener> listener in strongSelf->_listeners) {
+            if ([listener respondsToSelector:@selector(player:didUpdatePlaybackRate:)]) {
+                [listener player:strongSelf didUpdatePlaybackRate:nextRate];
+            }
+        }
+    }];
+}
+
+
+- (void) resetPlaybackRateImmediately
+{
+    [_rateRampTimer invalidate];
+    _rateRampTimer = nil;
+    
+    _playbackRate = 1.0;
+    _activePlaybackRate = 1.0;
+    [_engine updatePlaybackRate:1.0];
+    [self _updateTimeStrings];
+    
+    for (id<PlayerListener> listener in _listeners) {
+        if ([listener respondsToSelector:@selector(player:didUpdatePlaybackRate:)]) {
+            [listener player:self didUpdatePlaybackRate:1.0];
+        }
     }
 }
 

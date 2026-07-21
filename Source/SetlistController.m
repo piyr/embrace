@@ -172,6 +172,28 @@ static NSInteger sAutoGapMaximum = 16;
     [self setPlayer:[Player sharedInstance]];
     [self _setupPlayer];
 
+    if ([self gearMenu]) {
+        [[self gearMenu] addItem:[NSMenuItem separatorItem]];
+        
+        NSMenuItem *speedUpItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Speed Up (+0.5%)", nil)
+                                                             action:@selector(increasePlaybackSpeed:)
+                                                      keyEquivalent:@""];
+        [speedUpItem setTarget:self];
+        [[self gearMenu] addItem:speedUpItem];
+        
+        NSMenuItem *speedDownItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Slow Down (-0.5%)", nil)
+                                                               action:@selector(decreasePlaybackSpeed:)
+                                                        keyEquivalent:@""];
+        [speedDownItem setTarget:self];
+        [[self gearMenu] addItem:speedDownItem];
+        
+        NSMenuItem *resetSpeedItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Reset Speed", nil)
+                                                                action:@selector(resetPlaybackSpeed:)
+                                                         keyEquivalent:@""];
+        [resetSpeedItem setTarget:self];
+        [[self gearMenu] addItem:resetSpeedItem];
+    }
+
     [[self volumeSlider] setDragDelegate:self];
     [self _updateDragSongsView];
 
@@ -916,6 +938,29 @@ static NSInteger sAutoGapMaximum = 16;
 }
 
 
+- (IBAction) increasePlaybackSpeed:(id)sender
+{
+    EmbraceLogMethod();
+    double currentRate = [[Player sharedInstance] playbackRate];
+    [[Player sharedInstance] setPlaybackRate:currentRate + 0.005];
+}
+
+
+- (IBAction) decreasePlaybackSpeed:(id)sender
+{
+    EmbraceLogMethod();
+    double currentRate = [[Player sharedInstance] playbackRate];
+    [[Player sharedInstance] setPlaybackRate:currentRate - 0.005];
+}
+
+
+- (IBAction) resetPlaybackSpeed:(id)sender
+{
+    EmbraceLogMethod();
+    [[Player sharedInstance] setPlaybackRate:1.0];
+}
+
+
 - (IBAction) decreaseAutoGap:(id)sender
 {
     EmbraceLogMethod();
@@ -1041,6 +1086,16 @@ static NSInteger sAutoGapMaximum = 16;
         action == @selector(revealTime:))
     {
         return [[self tracksController] validateMenuItem:menuItem];
+    }
+    
+    if (action == @selector(increasePlaybackSpeed:)) {
+        return [[Player sharedInstance] playbackRate] < 1.03;
+    }
+    if (action == @selector(decreasePlaybackSpeed:)) {
+        return [[Player sharedInstance] playbackRate] > 0.97;
+    }
+    if (action == @selector(resetPlaybackSpeed:)) {
+        return [[Player sharedInstance] playbackRate] != 1.0;
     }
     
     return YES;
@@ -1172,6 +1227,12 @@ static NSInteger sAutoGapMaximum = 16;
 
     [self _updatePlayButton];
     [self _calculateStartAndEndTimes];
+}
+
+
+- (void) player:(Player *)player didUpdatePlaybackRate:(double)rate
+{
+    [[self tracksController] updatePlayingTrackCell];
 }
 
 

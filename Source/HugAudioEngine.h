@@ -33,6 +33,8 @@
 // -1.0 = left, 0.0 = center, 1.0 = right
 - (void) updateStereoBalance:(float)stereoBalance;
 
+- (void) updatePlaybackRate:(double)rate;
+
 - (void) updateEffectAudioUnits:(NSArray<AUAudioUnit *> *)effectAudioUnits;
 
 // Graph -> Player

@@ -1037,6 +1037,21 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
 }
 
 
+- (void) updatePlayingTrackCell
+{
+    Track *playingTrack = [[Player sharedInstance] currentTrack];
+    if (!playingTrack) return;
+
+    NSInteger row = [_tracks indexOfObject:playingTrack];
+    if (row != NSNotFound) {
+        id view = [[self tableView] viewAtColumn:0 row:row makeIfNecessary:NO];
+        if ([view isKindOfClass:[TrackTableCellView class]]) {
+            [(TrackTableCellView *)view updateDurationDisplay];
+        }
+    }
+}
+
+
 #pragma mark - Public
 
 - (void) copy:(id)sender

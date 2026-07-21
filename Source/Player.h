@@ -41,6 +41,10 @@ extern volatile NSInteger PlayerShouldUseCrashPad;
 @property (nonatomic, strong) NSArray<Effect *> *effects;
 - (void) saveEffectState;
 
+@property (nonatomic) double playbackRate;
+@property (nonatomic, copy, readonly) NSString *playbackRateString;
+- (void)resetPlaybackRateImmediately;
+
 @property (nonatomic) BOOL preventNextTrack;
 
 @property (nonatomic) double matchLoudnessLevel;
@@ -93,6 +97,9 @@ extern volatile NSInteger PlayerShouldUseCrashPad;
 - (void) player:(Player *)player didInterruptPlaybackWithReason:(PlayerInterruptionReason)reason;
 - (void) player:(Player *)player didFinishTrack:(Track *)finishedTrack;
 - (void) playerDidTick:(Player *)player;
+
+@optional
+- (void) player:(Player *)player didUpdatePlaybackRate:(double)rate;
 @end
 
 @protocol PlayerTrackProvider <NSObject>

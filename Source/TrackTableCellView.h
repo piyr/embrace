@@ -9,6 +9,7 @@
 
 - (void) revealTime;
 - (void) updateColors;
+- (void) updateDurationDisplay;
 
 @property (nonatomic, readonly) Track *track;
 
