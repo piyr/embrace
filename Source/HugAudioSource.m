@@ -218,7 +218,8 @@ static OSStatus sConverterInputCallback(
         }
 
         UInt32 outputFrameSize = [[_settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue];
-        AudioBufferList *inputScratch = HugAudioBufferListCreate(channelCount, outputFrameSize, YES);
+        UInt32 scratchFrameSize = MAX(16384, outputFrameSize * 4);
+        AudioBufferList *inputScratch = HugAudioBufferListCreate(channelCount, scratchFrameSize, YES);
 
         _context = calloc(1, sizeof(RenderContext));
         _context->sampleRate   = format.mSampleRate;
@@ -367,10 +368,12 @@ static OSStatus sConverterInputCallback(
 {
     AudioStreamBasicDescription inputFormat = [_audioFile format];
 
-    double outputSampleRate = [[_settings objectForKey:HugAudioSettingSampleRate] doubleValue];
-    UInt32 frameSize        = [[_settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue];
+    double outputSampleRate  = [[_settings objectForKey:HugAudioSettingSampleRate] doubleValue];
+    UInt32 outputFrameSize   = [[_settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue];
+    UInt32 maxInternalFrames = MAX(16384, outputFrameSize * 4);
 
-    UInt32 frameSizeSize = sizeof(frameSize);
+    UInt32 calculateBufferSize = maxInternalFrames;
+    UInt32 frameSizeSize       = sizeof(calculateBufferSize);
 
     if (inputFormat.mSampleRate == outputSampleRate) return YES;
 
@@ -400,12 +403,12 @@ static OSStatus sConverterInputCallback(
     );
 
     ok = ok && HugCheckError(
-        AudioConverterGetProperty(_converter, kAudioConverterPropertyCalculateInputBufferSize, &frameSizeSize, &frameSize),
-        @"HugAudioSource", @"AudioConverterSetProperty[ CalculateInputBufferSize ]"
+        AudioConverterGetProperty(_converter, kAudioConverterPropertyCalculateInputBufferSize, &frameSizeSize, &calculateBufferSize),
+        @"HugAudioSource", @"AudioConverterGetProperty[ CalculateInputBufferSize ]"
     );
     
-    _context->converterScratch = HugAudioBufferListCreate(channelCount, frameSize, YES);
-    _context->converterScratchFrameSize = frameSize;
+    _context->converterScratch = HugAudioBufferListCreate(channelCount, calculateBufferSize, YES);
+    _context->converterScratchFrameSize = calculateBufferSize;
 
     return ok;
 }

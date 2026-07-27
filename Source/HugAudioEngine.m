@@ -478,9 +478,11 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         
         if (_timePitchAudioUnit) {
             NSError *error = nil;
-            if (![_timePitchAudioUnit renderResourcesAllocated] || ([_timePitchAudioUnit maximumFramesToRender] != frameSize)) {
+            UInt32 maxInternalFrames = MAX(16384, frameSize * 4);
+
+            if (![_timePitchAudioUnit renderResourcesAllocated] || ([_timePitchAudioUnit maximumFramesToRender] != maxInternalFrames)) {
                 [_timePitchAudioUnit deallocateRenderResources];
-                [_timePitchAudioUnit setMaximumFramesToRender:frameSize];
+                [_timePitchAudioUnit setMaximumFramesToRender:maxInternalFrames];
                 
                 AUAudioUnitBus *inputBus  = [[_timePitchAudioUnit inputBusses]  objectAtIndexedSubscript:0];
                 AUAudioUnitBus *outputBus = [[_timePitchAudioUnit outputBusses] objectAtIndexedSubscript:0];
