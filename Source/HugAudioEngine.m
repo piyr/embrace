@@ -911,7 +911,19 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
     HugLevelMeterReset(_leftLevelMeter);
     HugLevelMeterReset(_rightLevelMeter);
-    
+
+    // Gain reduction must not follow one track into the next. Once it engages, the limiter's
+    // decay time doubles on every re-trigger up to 16 seconds, so without this a track that
+    // drove it hard leaves the one after it quieter and flatter for that long. The time-pitch
+    // unit makes that easy to hit: above 1.0 it rewrites phase relationships and peaks can
+    // land several dB higher than the material they came from.
+    //
+    // Safe here for the same reason the meter resets above are: volume was set to zero at the
+    // top of this method and -_sendAudioSourceToRenderThread: has since waited out a render
+    // cycle, so the limiter is looking at silence and will not re-trigger from the tail.
+    //
+    HugLimiterReset(_emergencyLimiter);
+
     _playbackStatus = HugPlaybackStatusStopped;
     _timeElapsed    = 0;
     _timeRemaining  = 0;
