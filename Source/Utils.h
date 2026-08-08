@@ -62,6 +62,9 @@ extern NSUInteger GetCombinedBuildNumber(NSString *string);
 
 extern NSString *GetStringForTime(NSTimeInterval time);
 
+// "+1.5%" / "-0.5%", or an empty string at normal speed.
+extern NSString *GetStringForPlaybackRate(double rate);
+
 extern NSString *GetApplicationSupportDirectory(void);
 
 extern NSString *GetBundleIdentifierWithSuffix(NSString *suffix);

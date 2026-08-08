@@ -203,9 +203,8 @@ static double sMaxVolume = 1.0 - (2.0 / 32767.0);
         [self setTimeRemainingString:nil];
     }
     
-    if ([self isPlaying] && fabs(_activePlaybackRate - 1.0) > 0.0001) {
-        double pct = (_activePlaybackRate - 1.0) * 100.0;
-        [self setPlaybackRateString:[NSString stringWithFormat:@"%+.1f%%", pct]];
+    if ([self isPlaying]) {
+        [self setPlaybackRateString:GetStringForPlaybackRate(_activePlaybackRate)];
     } else {
         [self setPlaybackRateString:@""];
     }
@@ -615,6 +614,12 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 {
     EmbraceLog(@"Player", @"-playNextTrack");
 
+    // A fade-stop can still be running if the track reached its end before the fade did.
+    // Left alone, the timer would keep ramping down over the track we are about to start
+    // and then hard stop it a moment later.
+    //
+    BOOL wasFading = [self _cancelFade];
+
     Track *nextTrack = nil;
     NSTimeInterval padding = 0;
 
@@ -646,6 +651,8 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
         EmbraceLog(@"Player", @"Calling -hardStop due to nil nextTrack");
         [self hardStop];
     }
+
+    if (wasFading) [self setVolume:_volumeBeforeFade];
 }
 
 
@@ -676,6 +683,8 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 
     if (!_currentTrack) return;
 
+    BOOL wasFading = [self _cancelFade];
+
     Track *nextTrack = nil;
     NSTimeInterval padding = 0;
 
@@ -698,6 +707,23 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
         EmbraceLog(@"Player", @"Calling -hardStop due to nil nextTrack");
         [self hardStop];
     }
+
+    if (wasFading) [self setVolume:_volumeBeforeFade];
+}
+
+
+// Abandons a fade in progress. Callers restore _volumeBeforeFade only after they have set
+// up whatever comes next: by then the engine has muted the graph, so the restore lands in
+// silence instead of briefly bringing the outgoing track back up.
+//
+- (BOOL) _cancelFade
+{
+    if (!_fadeTimer) return NO;
+
+    [_fadeTimer invalidate];
+    _fadeTimer = nil;
+
+    return YES;
 }
 
 
@@ -705,12 +731,7 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 {
     EmbraceLog(@"Player", @"-hardStop");
 
-    BOOL wasFading = NO;
-    if (_fadeTimer) {
-        [_fadeTimer invalidate];
-        _fadeTimer = nil;
-        wasFading = YES;
-    }
+    BOOL wasFading = [self _cancelFade];
 
     if (!_currentTrack) {
         if (wasFading) {
@@ -872,8 +893,12 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
         [_currentTrack setTrackStatus:TrackStatusPreparing];
 
         _timeElapsed = 0;
-        
-        [self resetPlaybackRateImmediately];
+
+        // Each track starts at its own speed -- either set in the setlist, or left behind by
+        // a live adjustment the last time it played.
+        //
+        [self _setPlaybackRateImmediately:
+            currentTrack ? [currentTrack playbackRate] : TrackPlaybackRateNormal];
     }
 }
 
@@ -886,12 +911,19 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 
 - (void) setPlaybackRate:(double)rate
 {
-    if (rate < 0.97) rate = 0.97;
-    if (rate > 1.03) rate = 1.03;
+    if (rate < TrackPlaybackRateMinimum) rate = TrackPlaybackRateMinimum;
+    if (rate > TrackPlaybackRateMaximum) rate = TrackPlaybackRateMaximum;
 
     if (_playbackRate != rate) {
         _playbackRate = rate;
-        
+
+        // Sticky: a live adjustment becomes the track's own speed, so playing it again later
+        // starts where you left it. -_setPlaybackRateImmediately: deliberately does not do
+        // this -- that is the path a track's stored speed is loaded through, and writing back
+        // from there would be circular.
+        //
+        [_currentTrack setPlaybackRate:rate];
+
         [self _startPlaybackRateRampTo:rate];
     }
 }
@@ -937,19 +969,25 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 }
 
 
-- (void) resetPlaybackRateImmediately
+// Used when there is no audio in flight to glide -- at a track boundary the graph has been
+// muted and the new source has not started, so the rate can just be set.
+//
+- (void) _setPlaybackRateImmediately:(double)rate
 {
+    if (rate < TrackPlaybackRateMinimum) rate = TrackPlaybackRateMinimum;
+    if (rate > TrackPlaybackRateMaximum) rate = TrackPlaybackRateMaximum;
+
     [_rateRampTimer invalidate];
     _rateRampTimer = nil;
-    
-    _playbackRate = 1.0;
-    _activePlaybackRate = 1.0;
-    [_engine updatePlaybackRate:1.0];
+
+    _playbackRate = rate;
+    _activePlaybackRate = rate;
+    [_engine updatePlaybackRate:rate];
     [self _updateTimeStrings];
-    
+
     for (id<PlayerListener> listener in _listeners) {
         if ([listener respondsToSelector:@selector(player:didUpdatePlaybackRate:)]) {
-            [listener player:self didUpdatePlaybackRate:1.0];
+            [listener player:self didUpdatePlaybackRate:rate];
         }
     }
 }

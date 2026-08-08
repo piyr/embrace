@@ -334,7 +334,8 @@
         @"trackStatus",
         @"trackLabel",
         @"duplicate",
-        @"cortinaTimerActive"
+        @"cortinaTimerActive",
+        @"playbackRate"
     ];
     
     _observedObject = objectValue;
@@ -883,12 +884,17 @@
     NSString *durationString = GetStringForTime(round([track playDuration]));
     if (!durationString) durationString = @"";
 
+    // The playing track shows the rate it is actually running at, which the live +/- controls
+    // can have moved off the track's own setting. Everything else shows what it will start at.
+    //
     Player *player = [Player sharedInstance];
-    if ([player currentTrack] == track && [player isPlaying]) {
-        NSString *rateStr = [player playbackRateString];
-        if ([rateStr length] > 0) {
-            durationString = [durationString stringByAppendingFormat:@" (%@)", rateStr];
-        }
+
+    NSString *rateStr = ([player currentTrack] == track && [player isPlaying]) ?
+        [player playbackRateString] :
+        GetStringForPlaybackRate([track playbackRate]);
+
+    if ([rateStr length] > 0) {
+        durationString = [durationString stringByAppendingFormat:@" (%@)", rateStr];
     }
 
     [[self durationField] setStringValue:durationString];

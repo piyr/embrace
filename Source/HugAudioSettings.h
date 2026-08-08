@@ -18,3 +18,14 @@ extern HugAudioSettings const HugAudioSettingTakeExclusiveAccess;
 extern HugAudioSettings const HugAudioSettingResetDeviceVolume;
 
 
+// The time-pitch unit pulls roughly (frameCount * rate) input frames for every frameCount
+// frames it renders, so at rates above 1.0 it asks the source for more than one output
+// buffer's worth. Everything upstream of it -- the source's scratch buffers, the sample
+// rate converter, the pre-gain ramper -- must be sized against this bound rather than
+// against HugAudioSettingFrameSize.
+static inline UInt32 HugGetMaxInternalFrameCount(UInt32 frameSize)
+{
+    return MAX(16384, frameSize * 4);
+}
+
+

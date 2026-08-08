@@ -700,6 +700,9 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
  
     } else if (action == @selector(toggleIgnoreAutoGap:)) {
         return [self _validateToggleIgnoreAutoGapWithMenuItem:menuItem];
+
+    } else if (action == @selector(changePlaybackRate:)) {
+        return [self _validateChangePlaybackRateWithMenuItem:menuItem];
     
     } else if (action == @selector(revealTime:)) {
         return [self _validateRevealTimeWithMenuItem:menuItem];
@@ -767,6 +770,46 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
     if (isOff && isOn) {
         [menuItem setState:NSControlStateValueMixed];
         isEnabled = NO;
+    } else if (isOn) {
+        [menuItem setState:NSControlStateValueOn];
+    } else {
+        [menuItem setState:NSControlStateValueOff];
+    }
+
+    return isEnabled;
+}
+
+
+- (BOOL) _validateChangePlaybackRateWithMenuItem:(NSMenuItem *)menuItem
+{
+    NSArray *selectedTracks = [self selectedTracks];
+
+    if (![selectedTracks count]) {
+        [menuItem setState:NSControlStateValueOff];
+        return NO;
+    }
+
+    double itemRate = TrackPlaybackRateNormal + ([menuItem tag] / 1000.0);
+
+    BOOL isEnabled = YES;
+    BOOL isOn      = NO;
+    BOOL isOff     = NO;
+
+    for (Track *track in selectedTracks) {
+        if ([track trackStatus] == TrackStatusPlayed) isEnabled = NO;
+
+        // Compare against half a step so the tag arithmetic above and the stored double
+        // agree without depending on exact floating point equality.
+        //
+        if (fabs([track playbackRate] - itemRate) < (TrackPlaybackRateStep / 2.0)) {
+            isOn = YES;
+        } else {
+            isOff = YES;
+        }
+    }
+
+    if (isOn && isOff) {
+        [menuItem setState:NSControlStateValueMixed];
     } else if (isOn) {
         [menuItem setState:NSControlStateValueOn];
     } else {
@@ -989,6 +1032,33 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
     for (Track *track in [self selectedTracks]) {
         if ([track trackStatus] != TrackStatusPlayed) {
             [track setIgnoresAutoGap:![track ignoresAutoGap]];
+        }
+    }
+}
+
+
+// Sender's tag carries the rate as thousandths away from normal, so +1.5% is tag 15 and
+// normal speed is tag 0.
+//
+- (void) changePlaybackRate:(id)sender
+{
+    EmbraceLogMethod();
+
+    double rate = TrackPlaybackRateNormal + ([sender tag] / 1000.0);
+
+    Player *player = [Player sharedInstance];
+
+    for (Track *track in [self selectedTracks]) {
+        if ([track trackStatus] != TrackStatusPlayed) {
+            [track setPlaybackRate:rate];
+
+            // Retargeting the track that is playing right now takes effect immediately, ramped
+            // the same way the live +/- controls are. -[Player setPlaybackRate:] writes back to
+            // the track, which is already at this rate, so it stops there.
+            //
+            if ([player currentTrack] == track) {
+                [player setPlaybackRate:rate];
+            }
         }
     }
 }

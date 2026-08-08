@@ -541,6 +541,17 @@ NSString *GetStringForTime(NSTimeInterval time)
 }
 
 
+NSString *GetStringForPlaybackRate(double rate)
+{
+    // Half the smallest step we allow, so accumulated floating point error in a rate that
+    // was stepped back to normal still reads as normal.
+    //
+    if (fabs(rate - 1.0) < (TrackPlaybackRateStep / 2.0)) return @"";
+
+    return [NSString stringWithFormat:@"%+.1f%%", (rate - 1.0) * 100.0];
+}
+
+
 NSString *GetApplicationSupportDirectory()
 {
     NSString *name = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleExecutable"];

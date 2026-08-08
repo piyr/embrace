@@ -218,7 +218,7 @@ static OSStatus sConverterInputCallback(
         }
 
         UInt32 outputFrameSize = [[_settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue];
-        UInt32 scratchFrameSize = MAX(16384, outputFrameSize * 4);
+        UInt32 scratchFrameSize = HugGetMaxInternalFrameCount(outputFrameSize);
         AudioBufferList *inputScratch = HugAudioBufferListCreate(channelCount, scratchFrameSize, YES);
 
         _context = calloc(1, sizeof(RenderContext));
@@ -370,7 +370,7 @@ static OSStatus sConverterInputCallback(
 
     double outputSampleRate  = [[_settings objectForKey:HugAudioSettingSampleRate] doubleValue];
     UInt32 outputFrameSize   = [[_settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue];
-    UInt32 maxInternalFrames = MAX(16384, outputFrameSize * 4);
+    UInt32 maxInternalFrames = HugGetMaxInternalFrameCount(outputFrameSize);
 
     UInt32 calculateBufferSize = maxInternalFrames;
     UInt32 frameSizeSize       = sizeof(calculateBufferSize);

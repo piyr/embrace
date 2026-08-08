@@ -9,6 +9,14 @@ extern NSString * const TrackDidModifyDurationNotificationName;
 
 @class TrackAnalyzer;
 
+// Per-track playback rate. 1.0 is normal speed; the bounds match what the live +/- controls
+// allow, since both end up going through -[Player setPlaybackRate:].
+//
+extern const double TrackPlaybackRateNormal;
+extern const double TrackPlaybackRateMinimum;
+extern const double TrackPlaybackRateMaximum;
+extern const double TrackPlaybackRateStep;
+
 typedef NS_ENUM(NSInteger, TrackStatus) {
     TrackStatusQueued    = 0,  // Track is queued
     TrackStatusPreparing = 3,  // Track is preparing or in auto gap
@@ -66,6 +74,10 @@ typedef NS_ENUM(NSInteger, TrackLabel) {
 @property (nonatomic) TrackStatus trackStatus;
 @property (nonatomic) BOOL stopsAfterPlaying;
 @property (nonatomic) BOOL ignoresAutoGap;
+
+// Speed this track starts at, applied by -[Player setCurrentTrack:]. Adjusting the rate live
+// while the track plays writes back here, so the change carries over to the next play.
+@property (nonatomic) double playbackRate;
 @property (nonatomic) BOOL cortinaTimerActive;
 
 @property (nonatomic) NSTimeInterval expectedDuration;

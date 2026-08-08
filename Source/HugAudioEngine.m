@@ -84,6 +84,11 @@ typedef struct {
     volatile float preGain;
 
     volatile UInt64 renderStart;
+
+    // Host time units. Combined latency of every audio unit between the source input
+    // block and the output, used to timestamp playback packets with the moment the
+    // frames being pulled now will actually be heard.
+    volatile UInt64 downstreamLatency;
 } RenderUserInfo;
 
 
@@ -159,6 +164,8 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     NSArray<AUAudioUnit *> *_effectAudioUnits;
     AUAudioUnit            *_timePitchAudioUnit;
     float                   _volume;
+
+    uint64_t _graphSilencedHostTime;
 }
 
 
@@ -189,7 +196,13 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         _rightLevelMeter  = HugLevelMeterCreate();
         _emergencyLimiter = HugLimiterCreate();
         
-        _statusRingBuffer = HugRingBufferCreate(8196);
+        // Status packets are timestamped with the moment their audio is heard and held by
+        // -_readRingBuffers until then, so the buffer always carries the output latency plus
+        // the latency of the units in the graph. At 192kHz with 128 frame buffers that is
+        // ~6.5KB, so give it room to also absorb a main thread stall between update timer
+        // fires. The error buffer is low traffic and untimed.
+        //
+        _statusRingBuffer = HugRingBufferCreate(65536);
         _errorRingBuffer  = HugRingBufferCreate(8196);
 
         AudioComponentDescription timePitchCD = {
@@ -460,7 +473,18 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
         } else {
             if (inputBlock && (timestamp->mFlags & kAudioTimeStampHostTimeValid)) {
-                PacketDataPlayback packet = { timestamp->mHostTime, PacketTypePlayback, info };
+                // info describes the source frames pulled during this cycle, which are still
+                // sitting inside the units below us and won't be heard until they clear their
+                // latency. Timestamp the packet with that moment so -_readRingBuffers holds it
+                // back until then -- otherwise we'd report HugPlaybackStatusFinished (and start
+                // the next track) while the tail of this one is still in flight.
+                //
+                PacketDataPlayback packet = {
+                    timestamp->mHostTime + userInfo->downstreamLatency,
+                    PacketTypePlayback,
+                    info
+                };
+
                 sendStatusPacket(packet);
             }
         }
@@ -470,7 +494,9 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
     double sampleRate = [[_outputSettings objectForKey:HugAudioSettingSampleRate] doubleValue];
     UInt32 frameSize  = [[_outputSettings objectForKey:HugAudioSettingFrameSize] unsignedIntValue];
-    
+
+    NSTimeInterval downstreamLatency = 0;
+
     if (sampleRate && frameSize) {
         AVAudioFormat *format = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:sampleRate channels:2];
         
@@ -478,7 +504,7 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         
         if (_timePitchAudioUnit) {
             NSError *error = nil;
-            UInt32 maxInternalFrames = MAX(16384, frameSize * 4);
+            UInt32 maxInternalFrames = HugGetMaxInternalFrameCount(frameSize);
 
             if (![_timePitchAudioUnit renderResourcesAllocated] || ([_timePitchAudioUnit maximumFramesToRender] != maxInternalFrames)) {
                 [_timePitchAudioUnit deallocateRenderResources];
@@ -499,6 +525,7 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
                 HugLog(@"HugAudioEngine", @"Error when configuring timePitch: %@", error);
             } else {
                 [graph addAudioUnit:_timePitchAudioUnit];
+                downstreamLatency += [_timePitchAudioUnit latency];
             }
         }
         
@@ -525,9 +552,13 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
                 HugLog(@"HugAudioEngine", @"Error when configuring %@: %@", unit, error);
             } else  {
                 [graph addAudioUnit:unit];
+                downstreamLatency += [unit latency];
             }
         }
     }
+
+    HugLog(@"HugAudioEngine", @"downstream latency is %g ms", downstreamLatency * 1000);
+    _renderUserInfo.downstreamLatency = HugGetHostTimeWithSeconds(downstreamLatency);
 
     [graph addBlock:^(
         AudioUnitRenderActionFlags *ioActionFlags,
@@ -635,14 +666,51 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         @"HugAudioEngine", @"AudioOutputUnitStop"
     );
 
+    // The output unit is stopped, so nothing is inside these units' render blocks. This is
+    // the only place it is safe to reset them.
+    //
+    [_timePitchAudioUnit reset];
+
     for (AUAudioUnit *unit in _effectAudioUnits) {
         [unit reset];
     }
-    
+
+    _graphSilencedHostTime = 0;
+
     if (_updateTimer) {
         [_updateTimer invalidate];
         _updateTimer = nil;
     }
+}
+
+
+// The units in the graph hold downstreamLatency worth of the previous track. Once the input
+// block went nil they began flushing it out, but nothing unmutes until we say so -- block
+// here for whatever is left of that, so the outgoing track's tail is never heard under the
+// start of the incoming one. Usually preparing the source took longer and this returns
+// immediately. Waiting costs nothing at the head of the new track either: its own audio
+// cannot emerge from the graph until downstreamLatency after it was sent, which is later
+// still.
+//
+- (void) _waitForGraphToDrain
+{
+    if (!_graphSilencedHostTime) return;
+
+    uint64_t now = HugGetCurrentHostTime();
+
+    if (now > _graphSilencedHostTime) {
+        NSTimeInterval elapsed = HugGetSecondsWithHostTime(now - _graphSilencedHostTime);
+        NSTimeInterval latency = HugGetSecondsWithHostTime(_renderUserInfo.downstreamLatency);
+
+        if (elapsed < latency) {
+            NSTimeInterval remaining = latency - elapsed;
+
+            HugLog(@"HugAudioEngine", @"waiting %g ms for graph to drain", remaining * 1000);
+            usleep((useconds_t)(remaining * 1000000));
+        }
+    }
+
+    _graphSilencedHostTime = 0;
 }
 
 
@@ -738,9 +806,19 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     HugLevelMeterSetSampleRate(_rightLevelMeter, sampleRate);
     HugLimiterSetSampleRate(_emergencyLimiter, sampleRate);
 
-    HugLinearRamperSetMaxFrameCount(_preGainRamper, frames);
+    // _preGainRamper and _stereoField run in the block above _timePitchAudioUnit, so they see
+    // whatever frame count it pulls -- up to 3% more than the output buffer at our maximum
+    // rate. Size them against the internal bound rather than against `frames`, which is only
+    // the output buffer size. _volumeRamper runs below the unit and does see exactly `frames`.
+    //
+    UInt32 maxInternalFrames = HugGetMaxInternalFrameCount(
+        [[settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue]
+    );
+
+    HugLinearRamperSetMaxFrameCount(_preGainRamper, maxInternalFrames);
+    HugStereoFieldSetMaxFrameCount(_stereoField, maxInternalFrames);
+
     HugLinearRamperSetMaxFrameCount(_volumeRamper, frames);
-    HugStereoFieldSetMaxFrameCount(_stereoField, frames);
 
     size_t meterFrame = MIN(frames, 1024);
     HugLevelMeterSetMaxFrameCount(_leftLevelMeter, meterFrame);
@@ -779,6 +857,8 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     }
     
     [self _sendAudioSourceToRenderThread:source];
+
+    [self _waitForGraphToDrain];
     _renderUserInfo.volume = _volume;
 
     HugLog(@"HugAudioEngine", @"setup complete, starting output");
@@ -812,11 +892,19 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
     if ([self _isRunning]) {
         [self _sendAudioSourceToRenderThread:nil];
-        [self performSelector:@selector(_reallyStopHardware) withObject:nil afterDelay:30];
-    }
 
-    if (_timePitchAudioUnit) {
-        [_timePitchAudioUnit reset];
+        // The units in the graph are still rendering -- -_reallyStopHardware is 30 seconds
+        // out -- so we cannot -reset them from here. They are being fed silence as of now,
+        // and will have flushed the outgoing track once downstreamLatency has elapsed.
+        // -_waitForGraphToDrain holds the next track's audio back until they have.
+        //
+        _graphSilencedHostTime = HugGetCurrentHostTime();
+
+        [self performSelector:@selector(_reallyStopHardware) withObject:nil afterDelay:30];
+
+    } else {
+        // Hardware is stopped, so -_reallyStopHardware has already reset the units.
+        _graphSilencedHostTime = 0;
     }
 
     HugRingBufferConfirmReadAll(_statusRingBuffer);

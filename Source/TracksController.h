@@ -30,6 +30,7 @@ extern NSString *EmbraceQueuedTrackPasteboardType;
 
 - (void) toggleStopsAfterPlaying:(id)sender;
 - (void) toggleIgnoreAutoGap:(id)sender;
+- (void) changePlaybackRate:(id)sender;
 - (void) toggleMarkAsPlayed:(id)sender;
 
 - (void) detectDuplicates;

@@ -43,7 +43,6 @@ extern volatile NSInteger PlayerShouldUseCrashPad;
 
 @property (nonatomic) double playbackRate;
 @property (nonatomic, copy, readonly) NSString *playbackRateString;
-- (void)resetPlaybackRateImmediately;
 
 @property (nonatomic) BOOL preventNextTrack;
 

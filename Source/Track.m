@@ -20,6 +20,12 @@ NSString * const TrackDidModifyDurationNotificationName    = @"TrackDidModifyDur
 static NSString * const sLabelKey             = @"trackLabel";
 static NSString * const sStopsAfterPlayingKey = @"stopsAfterPlaying";
 static NSString * const sIgnoresAutoGapKey    = @"ignoresAutoGap";
+static NSString * const sPlaybackRateKey      = @"playbackRate";
+
+const double TrackPlaybackRateNormal  = 1.0;
+const double TrackPlaybackRateMinimum = 0.97;
+const double TrackPlaybackRateMaximum = 1.03;
+const double TrackPlaybackRateStep    = 0.005;
 static NSString * const sStatusKey            = @"trackStatus";
 static NSString * const sPlayedTimeKey        = @"playedTime";
 
@@ -49,6 +55,7 @@ static NSString * const sPlayedTimeKey        = @"playedTime";
 
 
 @implementation Track {
+    double          _playbackRate;   // 0 means "unset", see -playbackRate
     NSData         *_bookmark;
     TrackAnalyzer  *_trackAnalyzer;
     NSTimeInterval  _silenceAtStart;
@@ -374,6 +381,10 @@ static NSURL *sGetInternalURLForUUID(NSUUID *UUID, NSString *extension)
 
     if (_ignoresAutoGap) {
         [state setObject:@YES forKey:sIgnoresAutoGapKey];
+    }
+
+    if (_playbackRate && (_playbackRate != TrackPlaybackRateNormal)) {
+        [state setObject:@(_playbackRate) forKey:sPlaybackRateKey];
     }
 
     if (_album)            [state setObject:_album                forKey:TrackKeyAlbum];
@@ -871,6 +882,29 @@ static NSURL *sGetInternalURLForUUID(NSUUID *UUID, NSString *extension)
     }
 }
 
+
+
+// A zero _playbackRate means the rate was never set: tracks restored from setlists saved
+// before this existed, and tracks that were simply never adjusted, both land there.
+//
+- (double) playbackRate
+{
+    return _playbackRate ? _playbackRate : TrackPlaybackRateNormal;
+}
+
+
+- (void) setPlaybackRate:(double)playbackRate
+{
+    if (playbackRate < TrackPlaybackRateMinimum) playbackRate = TrackPlaybackRateMinimum;
+    if (playbackRate > TrackPlaybackRateMaximum) playbackRate = TrackPlaybackRateMaximum;
+
+    if ([self playbackRate] != playbackRate) {
+        _playbackRate = playbackRate;
+
+        _dirty = YES;
+        [self _saveStateImmediately:NO];
+    }
+}
 
 
 - (void) setIgnoresAutoGap:(BOOL)ignoresAutoGap

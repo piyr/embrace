@@ -136,6 +136,9 @@ static NSInteger sAutoGapMaximum = 16;
 
     [[self autoGapIcon] setTintColor:[NSColor labelColor]];
 
+    [self _insertPlaybackRateItemIntoMenu:[self tableMenu]];
+    [self _insertPlaybackRateItemIntoMenu:[self gearMenu]];
+
 
     // Add titlebar visual effect view
     {
@@ -554,22 +557,90 @@ static NSInteger sAutoGapMaximum = 16;
 }
 
 
+#pragma mark - Track Speed Menu
+
+// Built in code rather than in the nib: it is thirteen near-identical items, and the step
+// and range come from the same constants the live +/- controls use.
+//
+- (NSMenuItem *) _makePlaybackRateMenuItem
+{
+    NSMenu *submenu = [[NSMenu alloc] initWithTitle:NSLocalizedString(@"Speed", nil)];
+
+    NSInteger maxTag = lround((TrackPlaybackRateMaximum - TrackPlaybackRateNormal) * 1000);
+    NSInteger step   = lround(TrackPlaybackRateStep * 1000);
+
+    for (NSInteger tag = maxTag; tag >= -maxTag; tag -= step) {
+        if ((tag == 0) || (tag == -step)) {
+            [submenu addItem:[NSMenuItem separatorItem]];
+        }
+
+        NSString *title = tag ?
+            GetStringForPlaybackRate(TrackPlaybackRateNormal + (tag / 1000.0)) :
+            NSLocalizedString(@"Normal", nil);
+
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title
+                                                      action:@selector(changePlaybackRate:)
+                                               keyEquivalent:@""];
+        [item setTag:tag];
+        [item setTarget:self];
+
+        [submenu addItem:item];
+    }
+
+    NSMenuItem *speedItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Speed", nil)
+                                                       action:NULL
+                                                keyEquivalent:@""];
+    [speedItem setSubmenu:submenu];
+
+    return speedItem;
+}
+
+
+- (void) _insertPlaybackRateItemIntoMenu:(NSMenu *)menu
+{
+    if (!menu) return;
+
+    // Sits with the other per-track attributes, just below Ignore Auto Gap.
+    NSInteger index = [menu numberOfItems] - 1;
+
+    for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
+        if ([[menu itemAtIndex:i] action] == @selector(toggleIgnoreAutoGap:)) {
+            index = i;
+            break;
+        }
+    }
+
+    [menu insertItem:[self _makePlaybackRateMenuItem] atIndex:(index + 1)];
+}
+
+
 #pragma mark - Cortina Auto-Fade
 
 - (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-    if ([keyPath isEqualToString:@"currentTrack"] && [[Player sharedInstance] isPlaying]) {
+    // Deliberately not gated on -isPlaying. currentTrack going nil is exactly when playback
+    // stopped, and that is the case where an armed cortina timer most needs cancelling.
+    //
+    if ([keyPath isEqualToString:@"currentTrack"]) {
         [self _checkCortinaStatus];
     }
 }
 
 - (void) _checkCortinaStatus
 {
+    // While _isAutoFadingCortina we are between the fade and the resume, and currentTrack is
+    // nil on purpose -- the play timer is what gets us out, so leave the timers alone.
+    //
     if (!_isAutoFadingCortina) {
         [self _cancelCortinaTimers];
-        
+
         Track *currentTrack = [[Player sharedInstance] currentTrack];
-        if ([[currentTrack genre] caseInsensitiveCompare:@"Cortina"] == NSOrderedSame) {
+        NSString *genre = [currentTrack genre];
+
+        // -caseInsensitiveCompare: on a nil genre returns 0, which is NSOrderedSame, so the
+        // length check is what rules out a track with no genre -- and no track at all.
+        //
+        if ([genre length] && ([genre caseInsensitiveCompare:@"Cortina"] == NSOrderedSame)) {
             [currentTrack setCortinaTimerActive:YES];
             _cortinaStopTimer = [NSTimer scheduledTimerWithTimeInterval:80.0 target:self selector:@selector(_handleCortinaStopTimer:) userInfo:nil repeats:NO];
         }
@@ -592,10 +663,20 @@ static NSInteger sAutoGapMaximum = 16;
 
 - (void) _handleCortinaStopTimer:(NSTimer *)timer
 {
-    _isAutoFadingCortina = YES;
-    
+    _cortinaStopTimer = nil;
+
     Track *currentTrack = [[Player sharedInstance] currentTrack];
     [currentTrack setCortinaTimerActive:NO];
+
+    // Nothing to fade means playback already stopped or moved on without us. Arming the
+    // resume timer from here would start playback the user never asked for.
+    //
+    if (!currentTrack) {
+        EmbraceLog(@"SetlistController", @"Cortina stop timer fired with no current track, ignoring");
+        return;
+    }
+
+    _isAutoFadingCortina = YES;
 
     [[Player sharedInstance] fadeStop];
 
@@ -604,8 +685,25 @@ static NSInteger sAutoGapMaximum = 16;
 
 - (void) _handleCortinaPlayTimer:(NSTimer *)timer
 {
+    _cortinaPlayTimer = nil;
+
+    // The user can stop, clear, or start something else during the gap. Only resume if we
+    // are still the reason playback is stopped.
+    //
+    if (!_isAutoFadingCortina) return;
+
     _isAutoFadingCortina = NO;
-    
+
+    if ([[Player sharedInstance] isPlaying]) {
+        EmbraceLog(@"SetlistController", @"Cortina play timer fired while already playing, ignoring");
+
+        // Whatever the user started during the gap never got checked, since _checkCortinaStatus
+        // leaves state alone while _isAutoFadingCortina is set. Arm it now.
+        //
+        [self _checkCortinaStatus];
+        return;
+    }
+
     [[Player sharedInstance] play];
 }
 
@@ -1047,6 +1145,15 @@ static NSInteger sAutoGapMaximum = 16;
 }
 
 
+// Forwards sender rather than self: the rate lives in the menu item's tag.
+//
+- (IBAction) changePlaybackRate:(id)sender
+{
+    EmbraceLogMethod();
+    [[self tracksController] changePlaybackRate:sender];
+}
+
+
 - (IBAction) showGearMenu:(id)sender
 {
     EmbraceLogMethod();
@@ -1083,19 +1190,20 @@ static NSInteger sAutoGapMaximum = 16;
         action == @selector(toggleMarkAsPlayed:) ||
         action == @selector(toggleStopsAfterPlaying:) ||
         action == @selector(toggleIgnoreAutoGap:) ||
+        action == @selector(changePlaybackRate:) ||
         action == @selector(revealTime:))
     {
         return [[self tracksController] validateMenuItem:menuItem];
     }
-    
+
     if (action == @selector(increasePlaybackSpeed:)) {
-        return [[Player sharedInstance] playbackRate] < 1.03;
+        return [[Player sharedInstance] playbackRate] < TrackPlaybackRateMaximum;
     }
     if (action == @selector(decreasePlaybackSpeed:)) {
-        return [[Player sharedInstance] playbackRate] > 0.97;
+        return [[Player sharedInstance] playbackRate] > TrackPlaybackRateMinimum;
     }
     if (action == @selector(resetPlaybackSpeed:)) {
-        return [[Player sharedInstance] playbackRate] != 1.0;
+        return [[Player sharedInstance] playbackRate] != TrackPlaybackRateNormal;
     }
     
     return YES;
