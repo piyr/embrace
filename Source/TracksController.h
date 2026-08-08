@@ -31,6 +31,14 @@ extern NSString *EmbraceQueuedTrackPasteboardType;
 - (void) toggleStopsAfterPlaying:(id)sender;
 - (void) toggleIgnoreAutoGap:(id)sender;
 - (void) changePlaybackRate:(id)sender;
+
+// Speed of the selection. Absolute for the Speed submenu, relative for the +/- keys, which
+// step each track from its own rate so a mixed selection keeps its relative offsets.
+- (void) setPlaybackRateForSelectedTracks:(double)rate;
+- (void) adjustPlaybackRateForSelectedTracksBy:(double)delta;
+
+// YES when at least one selected track can still have its speed changed.
+@property (nonatomic, readonly) BOOL canChangePlaybackRateForSelectedTracks;
 - (void) toggleMarkAsPlayed:(id)sender;
 
 - (void) detectDuplicates;

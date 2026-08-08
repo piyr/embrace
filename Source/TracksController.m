@@ -1040,27 +1040,58 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
 // Sender's tag carries the rate as thousandths away from normal, so +1.5% is tag 15 and
 // normal speed is tag 0.
 //
+// Sender's tag carries the rate as thousandths away from normal, so +1.5% is tag 15 and
+// normal speed is tag 0.
+//
 - (void) changePlaybackRate:(id)sender
 {
     EmbraceLogMethod();
+    [self setPlaybackRateForSelectedTracks:(TrackPlaybackRateNormal + ([sender tag] / 1000.0))];
+}
 
-    double rate = TrackPlaybackRateNormal + ([sender tag] / 1000.0);
 
-    Player *player = [Player sharedInstance];
-
+- (void) setPlaybackRateForSelectedTracks:(double)rate
+{
     for (Track *track in [self selectedTracks]) {
         if ([track trackStatus] != TrackStatusPlayed) {
-            [track setPlaybackRate:rate];
-
-            // Retargeting the track that is playing right now takes effect immediately, ramped
-            // the same way the live +/- controls are. -[Player setPlaybackRate:] writes back to
-            // the track, which is already at this rate, so it stops there.
-            //
-            if ([player currentTrack] == track) {
-                [player setPlaybackRate:rate];
-            }
+            [self _applyPlaybackRate:rate toTrack:track];
         }
     }
+}
+
+
+- (void) adjustPlaybackRateForSelectedTracksBy:(double)delta
+{
+    for (Track *track in [self selectedTracks]) {
+        if ([track trackStatus] != TrackStatusPlayed) {
+            [self _applyPlaybackRate:([track playbackRate] + delta) toTrack:track];
+        }
+    }
+}
+
+
+- (void) _applyPlaybackRate:(double)rate toTrack:(Track *)track
+{
+    [track setPlaybackRate:rate];
+
+    // Retargeting the track that is playing right now takes effect immediately, ramped the
+    // same way a live adjustment is. Read the rate back off the track so the clamp applies
+    // to both. -[Player setPlaybackRate:] writes back to the track, which is already at this
+    // rate, so it stops there.
+    //
+    if ([[Player sharedInstance] currentTrack] == track) {
+        [[Player sharedInstance] setPlaybackRate:[track playbackRate]];
+    }
+}
+
+
+- (BOOL) canChangePlaybackRateForSelectedTracks
+{
+    for (Track *track in [self selectedTracks]) {
+        if ([track trackStatus] != TrackStatusPlayed) return YES;
+    }
+
+    return NO;
 }
 
 

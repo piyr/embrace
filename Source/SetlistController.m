@@ -1036,26 +1036,86 @@ static NSInteger sAutoGapMaximum = 16;
 }
 
 
+// The speed keys follow the setlist selection, the way every other per-track command does,
+// so a track can be set up before it plays. With nothing selected they fall back to whatever
+// is playing, which is the behaviour they had before. A selected track that happens to be
+// playing gets both: its stored speed changes and the live rate ramps.
+//
+- (BOOL) _playbackSpeedTargetsSelection
+{
+    return [[self tracksController] canChangePlaybackRateForSelectedTracks];
+}
+
+
+// A delta of 0 means Reset, which is available whenever something is off normal speed.
+//
+- (BOOL) _playbackRate:(double)rate hasRoomForDelta:(double)delta
+{
+    // Stepping by 0.005 accumulates a little error, so a rate that has effectively reached a
+    // limit can still compare strictly inside it. Anything within this of the limit counts as
+    // being there -- far below one step, far above the drift.
+    //
+    const double epsilon = 1e-9;
+
+    if (delta > 0) return (TrackPlaybackRateMaximum - rate) > epsilon;
+    if (delta < 0) return (rate - TrackPlaybackRateMinimum) > epsilon;
+
+    return fabs(rate - TrackPlaybackRateNormal) >= (TrackPlaybackRateStep / 2.0);
+}
+
+
+- (BOOL) _validatePlaybackSpeedChangeWithDelta:(double)delta
+{
+    if ([self _playbackSpeedTargetsSelection]) {
+        for (Track *track in [[self tracksController] selectedTracks]) {
+            if ([track trackStatus] == TrackStatusPlayed) continue;
+
+            if ([self _playbackRate:[track playbackRate] hasRoomForDelta:delta]) return YES;
+        }
+
+        return NO;
+    }
+
+    Player *player = [Player sharedInstance];
+    if (![player isPlaying]) return NO;
+
+    return [self _playbackRate:[player playbackRate] hasRoomForDelta:delta];
+}
+
+
 - (IBAction) increasePlaybackSpeed:(id)sender
 {
     EmbraceLogMethod();
-    double currentRate = [[Player sharedInstance] playbackRate];
-    [[Player sharedInstance] setPlaybackRate:currentRate + 0.005];
+    [self _adjustPlaybackSpeedBy:TrackPlaybackRateStep];
 }
 
 
 - (IBAction) decreasePlaybackSpeed:(id)sender
 {
     EmbraceLogMethod();
-    double currentRate = [[Player sharedInstance] playbackRate];
-    [[Player sharedInstance] setPlaybackRate:currentRate - 0.005];
+    [self _adjustPlaybackSpeedBy:-TrackPlaybackRateStep];
+}
+
+
+- (void) _adjustPlaybackSpeedBy:(double)delta
+{
+    if ([self _playbackSpeedTargetsSelection]) {
+        [[self tracksController] adjustPlaybackRateForSelectedTracksBy:delta];
+    } else {
+        [[Player sharedInstance] setPlaybackRate:([[Player sharedInstance] playbackRate] + delta)];
+    }
 }
 
 
 - (IBAction) resetPlaybackSpeed:(id)sender
 {
     EmbraceLogMethod();
-    [[Player sharedInstance] setPlaybackRate:1.0];
+
+    if ([self _playbackSpeedTargetsSelection]) {
+        [[self tracksController] setPlaybackRateForSelectedTracks:TrackPlaybackRateNormal];
+    } else {
+        [[Player sharedInstance] setPlaybackRate:TrackPlaybackRateNormal];
+    }
 }
 
 
@@ -1197,13 +1257,13 @@ static NSInteger sAutoGapMaximum = 16;
     }
 
     if (action == @selector(increasePlaybackSpeed:)) {
-        return [[Player sharedInstance] playbackRate] < TrackPlaybackRateMaximum;
+        return [self _validatePlaybackSpeedChangeWithDelta:TrackPlaybackRateStep];
     }
     if (action == @selector(decreasePlaybackSpeed:)) {
-        return [[Player sharedInstance] playbackRate] > TrackPlaybackRateMinimum;
+        return [self _validatePlaybackSpeedChangeWithDelta:-TrackPlaybackRateStep];
     }
     if (action == @selector(resetPlaybackSpeed:)) {
-        return [[Player sharedInstance] playbackRate] != TrackPlaybackRateNormal;
+        return [self _validatePlaybackSpeedChangeWithDelta:0];
     }
     
     return YES;

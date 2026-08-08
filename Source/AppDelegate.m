@@ -633,6 +633,15 @@
     } else if (action == @selector(revealTime:)) {
         return [_setlistController validateMenuItem:menuItem];
 
+    // These target the app delegate, so validation lands here rather than on the setlist
+    // controller that implements them.
+    //
+    } else if (action == @selector(increasePlaybackSpeed:) ||
+               action == @selector(decreasePlaybackSpeed:) ||
+               action == @selector(resetPlaybackSpeed:))
+    {
+        return [_setlistController validateMenuItem:menuItem];
+
     } else if (action == @selector(sendCrashReports:)){
         BOOL hasCrashReports = TelemetryHasContents(EscapePodGetTelemetryName());
 
