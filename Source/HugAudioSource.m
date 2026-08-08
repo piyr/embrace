@@ -446,14 +446,41 @@ static OSStatus sConverterInputCallback(
         UInt32 sourceChannelCount = context->bufferList->mNumberBuffers;
         UInt32 outputChannelCount = ioData->mNumberBuffers;
 
+        AUAudioFrameCount requestedFrameCount = frameCount;
+
         AudioBufferList *bufferToFill = (sourceChannelCount == outputChannelCount) ? ioData : context->inputScratch;
 
         if (!converter) {
             sFillBufferList(context, frameCount, bufferToFill);
         } else {
+            // AudioConverterFillComplexBuffer reads mDataByteSize as the capacity of each
+            // output buffer and writes back the number of bytes it actually produced. When
+            // the channel counts differ we fill context->inputScratch, which is allocated
+            // once and reused for every render, so the capacity it reports is whatever the
+            // previous call happened to produce. Restore it, or the buffer effectively
+            // shrinks to the first frame count ever requested and every larger request after
+            // that is quietly short-filled -- leaving the tail of the buffer holding the
+            // previous cycle's audio.
+            //
+            for (UInt32 i = 0; i < bufferToFill->mNumberBuffers; i++) {
+                bufferToFill->mBuffers[i].mDataByteSize = requestedFrameCount * sizeof(float);
+            }
+
             result = AudioConverterFillComplexBuffer(converter, sConverterInputCallback, context, &frameCount, bufferToFill, NULL);
+
+            // The converter can still come up short at the end of a track. Silence rather
+            // than stale memory is the only acceptable thing to hand onwards.
+            //
+            if (frameCount < requestedFrameCount) {
+                for (UInt32 i = 0; i < bufferToFill->mNumberBuffers; i++) {
+                    float *samples = (float *)bufferToFill->mBuffers[i].mData;
+                    memset(&samples[frameCount], 0, (requestedFrameCount - frameCount) * sizeof(float));
+                }
+
+                frameCount = requestedFrameCount;
+            }
         }
-        
+
         if (sourceChannelCount != outputChannelCount) {
             for (NSInteger o = 0; o < outputChannelCount; o++) {
                 NSInteger s = o % sourceChannelCount;

@@ -786,24 +786,25 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     UInt32 upstream   = _renderUserInfo.maxUpstreamFrameCount;
     UInt32 downstream = _renderUserInfo.maxDownstreamFrameCount;
 
-    if (upstream > _reportedUpstreamFrameCount) {
+    // Only a breach is worth saying anything about. The counts themselves climb a frame at a
+    // time while the rate ramps, which would otherwise fill the log with noise.
+    //
+    size_t upstreamCapacity = HugLinearRamperGetMaxFrameCount(_preGainRamper);
+
+    if ((upstream > upstreamCapacity) && (upstream > _reportedUpstreamFrameCount)) {
         _reportedUpstreamFrameCount = upstream;
 
-        size_t capacity = HugLinearRamperGetMaxFrameCount(_preGainRamper);
-
-        HugLog(@"HugAudioEngine", @"upstream frame count now %u (pre-gain ramper holds %ld, stereo field %ld)%@",
-            upstream, (long)capacity, (long)HugStereoFieldGetMaxFrameCount(_stereoField),
-            upstream > capacity ? @"  *** EXCEEDS CAPACITY ***" : @"");
+        HugLog(@"HugAudioEngine", @"upstream frame count %u EXCEEDS capacity (pre-gain ramper holds %ld, stereo field %ld)",
+            upstream, (long)upstreamCapacity, (long)HugStereoFieldGetMaxFrameCount(_stereoField));
     }
 
-    if (downstream > _reportedDownstreamFrameCount) {
+    size_t downstreamCapacity = HugLinearRamperGetMaxFrameCount(_volumeRamper);
+
+    if ((downstream > downstreamCapacity) && (downstream > _reportedDownstreamFrameCount)) {
         _reportedDownstreamFrameCount = downstream;
 
-        size_t capacity = HugLinearRamperGetMaxFrameCount(_volumeRamper);
-
-        HugLog(@"HugAudioEngine", @"downstream frame count now %u (volume ramper holds %ld, level meter %ld)%@",
-            downstream, (long)capacity, (long)HugLevelMeterGetMaxFrameCount(_leftLevelMeter),
-            downstream > capacity ? @"  *** EXCEEDS CAPACITY ***" : @"");
+        HugLog(@"HugAudioEngine", @"downstream frame count %u EXCEEDS capacity (volume ramper holds %ld, level meter %ld)",
+            downstream, (long)downstreamCapacity, (long)HugLevelMeterGetMaxFrameCount(_leftLevelMeter));
     }
 }
 
