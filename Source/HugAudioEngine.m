@@ -89,6 +89,14 @@ typedef struct {
     // block and the output, used to timestamp playback packets with the moment the
     // frames being pulled now will actually be heard.
     volatile UInt64 downstreamLatency;
+
+    // Diagnostics. The block above the time-pitch unit is called with however many frames
+    // that unit decides to pull, which is more than the device buffer whenever the rate is
+    // above 1.0. Everything upstream is sized for HugGetMaxInternalFrameCount(); record the
+    // largest counts actually seen so the update timer can check them against that, off the
+    // render thread. Plain stores, no allocation.
+    volatile UInt32 maxUpstreamFrameCount;
+    volatile UInt32 maxDownstreamFrameCount;
 } RenderUserInfo;
 
 
@@ -114,6 +122,36 @@ static OSStatus sOutputUnitRenderCallback(
     }
 
     return err;
+}
+
+
+// Whether a unit still matches the graph it is about to be placed in.
+//
+// Checking maximumFramesToRender alone is not enough: a sample rate change leaves it
+// untouched, so the unit would keep the rate it was first configured with. That stays
+// inaudible through AUNewTimePitch at rate 1.0, which passes audio through unaltered -- it
+// only surfaces once the speed moves off normal and the phase vocoder starts sizing its
+// windows and phase advances from the wrong sample rate.
+//
+static BOOL sUnitNeedsConfiguration(AUAudioUnit *unit, AVAudioFormat *format, UInt32 maxFramesToRender)
+{
+    if (![unit renderResourcesAllocated]) return YES;
+    if ([unit maximumFramesToRender] != maxFramesToRender) return YES;
+
+    AUAudioUnitBusArray *inputBusses  = [unit inputBusses];
+    AUAudioUnitBusArray *outputBusses = [unit outputBusses];
+
+    if (![inputBusses count] || ![outputBusses count]) return NO;
+
+    AVAudioFormat *inputFormat  = [[inputBusses  objectAtIndexedSubscript:0] format];
+    AVAudioFormat *outputFormat = [[outputBusses objectAtIndexedSubscript:0] format];
+
+    if ([inputFormat  sampleRate]   != [format sampleRate])   return YES;
+    if ([outputFormat sampleRate]   != [format sampleRate])   return YES;
+    if ([inputFormat  channelCount] != [format channelCount]) return YES;
+    if ([outputFormat channelCount] != [format channelCount]) return YES;
+
+    return NO;
 }
 
 
@@ -166,6 +204,9 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     float                   _volume;
 
     uint64_t _graphSilencedHostTime;
+
+    UInt32 _reportedUpstreamFrameCount;
+    UInt32 _reportedDownstreamFrameCount;
 }
 
 
@@ -436,6 +477,10 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     ) {
         userInfo->renderStart = HugGetCurrentHostTime();
 
+        if (inNumberFrames > userInfo->maxUpstreamFrameCount) {
+            userInfo->maxUpstreamFrameCount = inNumberFrames;
+        }
+
         __unsafe_unretained HugAudioSourceInputBlock inputBlock     = atomic_load(&userInfo->inputBlock);
         __unsafe_unretained HugAudioSourceInputBlock nextInputBlock = atomic_load(&userInfo->nextInputBlock);
         
@@ -506,13 +551,13 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
             NSError *error = nil;
             UInt32 maxInternalFrames = HugGetMaxInternalFrameCount(frameSize);
 
-            if (![_timePitchAudioUnit renderResourcesAllocated] || ([_timePitchAudioUnit maximumFramesToRender] != maxInternalFrames)) {
+            if (sUnitNeedsConfiguration(_timePitchAudioUnit, format, maxInternalFrames)) {
                 [_timePitchAudioUnit deallocateRenderResources];
                 [_timePitchAudioUnit setMaximumFramesToRender:maxInternalFrames];
-                
+
                 AUAudioUnitBus *inputBus  = [[_timePitchAudioUnit inputBusses]  objectAtIndexedSubscript:0];
                 AUAudioUnitBus *outputBus = [[_timePitchAudioUnit outputBusses] objectAtIndexedSubscript:0];
-                
+
                 if (!error) [inputBus  setFormat:format error:&error];
                 if (!error) [outputBus setFormat:format error:&error];
                 if (!error) [_timePitchAudioUnit allocateRenderResourcesAndReturnError:&error];
@@ -532,9 +577,9 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         for (AUAudioUnit *unit in _effectAudioUnits) {
             NSError *error = nil;
 
-            if (![unit renderResourcesAllocated] || ([unit maximumFramesToRender] != frameSize)) {
+            if (sUnitNeedsConfiguration(unit, format, frameSize)) {
                 [unit deallocateRenderResources];
-                
+
                 [unit setMaximumFramesToRender:frameSize];
 
                 AUAudioUnitBus *inputBus  = [[unit inputBusses]  objectAtIndexedSubscript:0];
@@ -571,6 +616,10 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
             timestamp->mHostTime :
             HugGetCurrentHostTime();
         
+        if (inNumberFrames > userInfo->maxDownstreamFrameCount) {
+            userInfo->maxDownstreamFrameCount = inNumberFrames;
+        }
+
         size_t meterFrameCount = HugLevelMeterGetMaxFrameCount(leftLevelMeter);
         
         NSInteger offset = 0;
@@ -726,9 +775,43 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 }
 
 
+// Checks the frame counts the render thread recorded against what the buffers upstream and
+// downstream of the time-pitch unit were actually sized for. The upstream block sees whatever
+// that unit pulls -- ceil(deviceBuffer * rate) -- so this is where a rate above 1.0 shows up.
+// Reports once per breach so a bad configuration is obvious in the log rather than only
+// audible.
+//
+- (void) _checkRenderFrameCounts
+{
+    UInt32 upstream   = _renderUserInfo.maxUpstreamFrameCount;
+    UInt32 downstream = _renderUserInfo.maxDownstreamFrameCount;
+
+    if (upstream > _reportedUpstreamFrameCount) {
+        _reportedUpstreamFrameCount = upstream;
+
+        size_t capacity = HugLinearRamperGetMaxFrameCount(_preGainRamper);
+
+        HugLog(@"HugAudioEngine", @"upstream frame count now %u (pre-gain ramper holds %ld, stereo field %ld)%@",
+            upstream, (long)capacity, (long)HugStereoFieldGetMaxFrameCount(_stereoField),
+            upstream > capacity ? @"  *** EXCEEDS CAPACITY ***" : @"");
+    }
+
+    if (downstream > _reportedDownstreamFrameCount) {
+        _reportedDownstreamFrameCount = downstream;
+
+        size_t capacity = HugLinearRamperGetMaxFrameCount(_volumeRamper);
+
+        HugLog(@"HugAudioEngine", @"downstream frame count now %u (volume ramper holds %ld, level meter %ld)%@",
+            downstream, (long)capacity, (long)HugLevelMeterGetMaxFrameCount(_leftLevelMeter),
+            downstream > capacity ? @"  *** EXCEEDS CAPACITY ***" : @"");
+    }
+}
+
+
 - (void) _handleUpdateTimer:(NSTimer *)timer
 {
     [self _readRingBuffers];
+    [self _checkRenderFrameCounts];
     if (_updateBlock) _updateBlock();
 }
 
@@ -795,7 +878,22 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     _outputDeviceID = deviceID;
     _outputSettings = settings;
 
-    HugLog(@"HugAudioEngine", @"Configuring audio units with %lf sample rate, %ld frame size", sampleRate, (long)frames);
+    // `frames` is MaximumFramesPerSlice read back from the output unit, which is not
+    // necessarily the buffer size we asked the device for -- worth seeing both, since every
+    // scratch buffer downstream of the time-pitch unit is sized from it.
+    //
+    HugLog(@"HugAudioEngine", @"Configuring audio units with %lf sample rate, requested frame size %u, "
+        @"MaximumFramesPerSlice %ld, internal bound %u",
+        sampleRate,
+        [[settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue],
+        (long)frames,
+        HugGetMaxInternalFrameCount([[settings objectForKey:HugAudioSettingFrameSize] unsignedIntValue])
+    );
+
+    _renderUserInfo.maxUpstreamFrameCount   = 0;
+    _renderUserInfo.maxDownstreamFrameCount = 0;
+    _reportedUpstreamFrameCount   = 0;
+    _reportedDownstreamFrameCount = 0;
 
     ok = ok && HugCheckError(
         AudioUnitInitialize(_outputAudioUnit),
