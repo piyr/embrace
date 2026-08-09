@@ -1109,28 +1109,31 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
 - (void) updateEffectAudioUnits:(NSArray<AUAudioUnit *> *)effectAudioUnits
 {
-    if (_effectAudioUnits != effectAudioUnits || ![_effectAudioUnits isEqual:effectAudioUnits]) {
-        NSMutableArray *effectsToAdd    = [NSMutableArray array];
-        NSMutableArray *effectsToRemove = [NSMutableArray array];
+    // Same object, or same units in the same order, means there is nothing to rebuild. The
+    // pointer check also covers both being nil, which -isEqual: would not.
+    //
+    if (_effectAudioUnits == effectAudioUnits) return;
+    if ([_effectAudioUnits isEqual:effectAudioUnits]) return;
 
-        for (AUAudioUnit *effect in _effectAudioUnits) {
-            if (![effectAudioUnits containsObject:effect]) {
-                [effectsToAdd addObject:effect];
-            }
-        }
+    // Units that were in the chain and no longer are. They keep whatever tail was in them
+    // otherwise, and would play it out if they were added back later.
+    //
+    NSMutableArray *effectsToRemove = [NSMutableArray array];
 
-        for (AUAudioUnit *effect in effectAudioUnits) {
-            if (![_effectAudioUnits containsObject:effect]) {
-                [effectsToRemove addObject:effect];
-            }
+    for (AUAudioUnit *unit in _effectAudioUnits) {
+        if (![effectAudioUnits containsObject:unit]) {
+            [effectsToRemove addObject:unit];
         }
-    
-        _effectAudioUnits = effectAudioUnits;
-        [self _reconnectGraph];
-        
-        for (AUAudioUnit *unit in effectsToRemove) {
-            [unit reset];
-        }
+    }
+
+    _effectAudioUnits = effectAudioUnits;
+    [self _reconnectGraph];
+
+    // Only safe after -_reconnectGraph, which waits for the render thread to pick up the new
+    // graph, so these units are no longer being rendered.
+    //
+    for (AUAudioUnit *unit in effectsToRemove) {
+        [unit reset];
     }
 }
 

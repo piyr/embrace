@@ -68,9 +68,14 @@ HugRingBuffer *HugRingBufferCreate(CFIndex capacity)
             if (addr2) vm_deallocate(mach_task_self(), addr2, capacity);
             if (addr1) vm_deallocate(mach_task_self(), addr1, capacity);
             addr2 = addr1 = 0;
-            
+
             continue;
         }
+
+        // Mapped. Without this the loop runs all 128 iterations, and since addr1 and addr2 are
+        // cleared at the top of each one, every mapping but the last is leaked.
+        //
+        break;
     }
 
     if (addr2 == (addr1 + capacity)) {
