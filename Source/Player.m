@@ -915,6 +915,8 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
     if (rate > TrackPlaybackRateMaximum) rate = TrackPlaybackRateMaximum;
 
     if (_playbackRate != rate) {
+        EmbraceLog(@"Player", @"playback rate ramping %g -> %g for %@", _activePlaybackRate, rate, _currentTrack);
+
         _playbackRate = rate;
 
         // Sticky: a live adjustment becomes the track's own speed, so playing it again later
@@ -976,6 +978,9 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 {
     if (rate < TrackPlaybackRateMinimum) rate = TrackPlaybackRateMinimum;
     if (rate > TrackPlaybackRateMaximum) rate = TrackPlaybackRateMaximum;
+
+    EmbraceLog(@"Player", @"playback rate set immediately to %g (was %g/%g) for %@",
+        rate, _playbackRate, _activePlaybackRate, _currentTrack);
 
     [_rateRampTimer invalidate];
     _rateRampTimer = nil;

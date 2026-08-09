@@ -97,6 +97,12 @@ typedef struct {
     // render thread. Plain stores, no allocation.
     volatile UInt32 maxUpstreamFrameCount;
     volatile UInt32 maxDownstreamFrameCount;
+
+    // Counts transitions of the emergency limiter into gain reduction. Material dependent, so
+    // it comes and goes -- worth being able to tell after the fact whether it engaged at all
+    // during a track rather than trying to catch a 4 point indicator dot mid-set.
+    volatile UInt32 limiterEngageCount;
+    volatile BOOL   limiterWasActive;
 } RenderUserInfo;
 
 
@@ -207,6 +213,7 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
     UInt32 _reportedUpstreamFrameCount;
     UInt32 _reportedDownstreamFrameCount;
+    UInt32 _reportedLimiterEngageCount;
 }
 
 
@@ -656,6 +663,11 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
             packet.leftMeterData.limiterActive = HugLimiterIsActive(limiter);
             packet.rightMeterData.limiterActive = packet.leftMeterData.limiterActive;
 
+            if (packet.leftMeterData.limiterActive && !userInfo->limiterWasActive) {
+                userInfo->limiterEngageCount++;
+            }
+            userInfo->limiterWasActive = packet.leftMeterData.limiterActive;
+
             sendStatusPacket(packet);
 
             framesRemaining -= meterFrameCount;
@@ -805,6 +817,15 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
         HugLog(@"HugAudioEngine", @"downstream frame count %u EXCEEDS capacity (volume ramper holds %ld, level meter %ld)",
             downstream, (long)downstreamCapacity, (long)HugLevelMeterGetMaxFrameCount(_leftLevelMeter));
+    }
+
+    UInt32 engageCount = _renderUserInfo.limiterEngageCount;
+
+    if (engageCount != _reportedLimiterEngageCount) {
+        HugLog(@"HugAudioEngine", @"emergency limiter engaged (%u since this track started)",
+            engageCount - _reportedLimiterEngageCount);
+
+        _reportedLimiterEngageCount = engageCount;
     }
 }
 
@@ -959,6 +980,17 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 
     [self _waitForGraphToDrain];
     _renderUserInfo.volume = _volume;
+
+    // Read the rate back off the unit rather than trusting what we last wrote, so a track
+    // starting through an active phase vocoder rather than the transparent path at 1.0 is
+    // visible in the log.
+    //
+    if (_timePitchAudioUnit) {
+        AUParameter *rateParam = [[_timePitchAudioUnit parameterTree] parameterWithID:0 scope:kAudioUnitScope_Global element:0];
+
+        HugLog(@"HugAudioEngine", @"time-pitch rate parameter reads %g at track start (%@)",
+            [rateParam value], ([rateParam value] == 1.0f) ? @"transparent" : @"ACTIVE");
+    }
 
     HugLog(@"HugAudioEngine", @"setup complete, starting output");
 
