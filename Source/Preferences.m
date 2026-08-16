@@ -7,6 +7,9 @@
 
 NSString * const PreferencesDidChangeNotification = @"PreferencesDidChange";
 
+const NSInteger CortinaFadeIntervalMinimum = 5;
+const NSInteger CortinaFadeIntervalMaximum = 600;
+
 static NSString * const sDeviceDictionaryUIDKey  = @"DeviceUID";
 static NSString * const sDeviceDictionaryNameKey = @"Name";
 
@@ -43,6 +46,8 @@ static NSDictionary *sGetDefaultValues()
         @"scriptHandlerName":       @"",
         @"allowsAllEffects":        @NO,
         @"allowsPlaybackShortcuts": @NO,
+
+        @"cortinaFadeInterval":     @80,
 
         @"keySignatureDisplayMode": @( KeySignatureDisplayModeRaw ),
         @"duplicateStatusMode":     @( DuplicateStatusModeSameFile ),
@@ -281,6 +286,22 @@ static void sRegisterDefaults()
         [[NSNotificationCenter defaultCenter] postNotificationName:PreferencesDidChangeNotification object:self];
         [self _save];
     }
+}
+
+
+- (void) setCortinaFadeInterval:(NSInteger)cortinaFadeInterval
+{
+    // A zero or negative interval would fire the stop timer the instant a cortina is armed,
+    // so a hand-edited or otherwise bogus default gets pulled back into range here rather
+    // than at each of the places that reads it.
+    //
+    if (cortinaFadeInterval < CortinaFadeIntervalMinimum) {
+        cortinaFadeInterval = CortinaFadeIntervalMinimum;
+    } else if (cortinaFadeInterval > CortinaFadeIntervalMaximum) {
+        cortinaFadeInterval = CortinaFadeIntervalMaximum;
+    }
+
+    _cortinaFadeInterval = cortinaFadeInterval;
 }
 
 

@@ -44,6 +44,9 @@ typedef NS_ENUM(NSInteger, TrackViewAttribute) {
 
 extern NSString * const PreferencesDidChangeNotification;
 
+extern const NSInteger CortinaFadeIntervalMinimum;
+extern const NSInteger CortinaFadeIntervalMaximum;
+
 
 @interface Preferences : NSObject
 
@@ -79,6 +82,10 @@ extern NSString * const PreferencesDidChangeNotification;
 @property (nonatomic) NSString *scriptHandlerName;
 @property (nonatomic) BOOL allowsAllEffects;
 @property (nonatomic) BOOL allowsPlaybackShortcuts;
+
+// Seconds a cortina plays before the auto-fade starts. Clamped to
+// [CortinaFadeIntervalMinimum, CortinaFadeIntervalMaximum] on set.
+@property (nonatomic) NSInteger cortinaFadeInterval;
 
 @property (nonatomic) KeySignatureDisplayMode keySignatureDisplayMode;
 @property (nonatomic) DuplicateStatusMode duplicateStatusMode;

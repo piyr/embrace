@@ -641,8 +641,15 @@ static NSInteger sAutoGapMaximum = 16;
         // length check is what rules out a track with no genre -- and no track at all.
         //
         if ([genre length] && ([genre caseInsensitiveCompare:@"Cortina"] == NSOrderedSame)) {
+            // Read at arm time, so changing the preference during a cortina does not move a
+            // deadline the DJ is already mixing against. It takes effect on the next one.
+            //
+            NSTimeInterval interval = [[Preferences sharedInstance] cortinaFadeInterval];
+
+            EmbraceLog(@"SetlistController", @"Arming cortina stop timer for %g seconds", interval);
+
             [currentTrack setCortinaTimerActive:YES];
-            _cortinaStopTimer = [NSTimer scheduledTimerWithTimeInterval:80.0 target:self selector:@selector(_handleCortinaStopTimer:) userInfo:nil repeats:NO];
+            _cortinaStopTimer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(_handleCortinaStopTimer:) userInfo:nil repeats:NO];
         }
     }
 }
