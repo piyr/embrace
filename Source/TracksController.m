@@ -27,6 +27,30 @@ static NSString * const sModifiedAtKey = @"modified-at";
 @end
 
 
+// A collected URL plus what the playlist asserted about it. Only the M3U
+// branch ever sets playbackRate — see PlayerHandoff_Design.md in the Compas
+// repository, whose §2 grammar is the shared contract. nil means the playlist
+// asserted nothing.
+@interface CollectedURL : NSObject
+@property (nonatomic) NSURL *URL;
+@property (nonatomic) NSNumber *playbackRate;
+@end
+
+
+@implementation CollectedURL
+
+- (NSString *) description
+{
+    if (_playbackRate) {
+        return [NSString stringWithFormat:@"<%@ %p, %@, rate=%@>", NSStringFromClass([self class]), self, _URL, _playbackRate];
+    } else {
+        return [NSString stringWithFormat:@"<%@ %p, %@>", NSStringFromClass([self class]), self, _URL];
+    }
+}
+
+@end
+
+
 @implementation TracksController {
     BOOL _didInit;
     NSMutableArray *_tracks;
@@ -83,6 +107,10 @@ static NSString * const sModifiedAtKey = @"modified-at";
 
 #pragma mark - Importing Tracks
 
+static void sCollectFolderURL(NSURL *inURL, NSMutableArray *results, NSInteger depth);
+static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInteger depth);
+
+
 static NSString *sGetFileType(NSURL *url)
 {
     NSString *typeIdentifier = nil;
@@ -93,14 +121,46 @@ static NSString *sGetFileType(NSURL *url)
 }
 
 
-static void sCollectURL(NSURL *inURL, NSMutableArray *results, NSInteger depth)
+static NSString * const sSpeedDirectivePrefix = @"#EXT-COMPAS:";
+
+// The playback rate a directive line asserts, or nil for one that asserts
+// nothing. An unknown key and a malformed value are both indistinguishable
+// from a directive that was never there. Range validation is left to
+// -[Track setPlaybackRate:], whose clamp is the single validator on this side.
+static NSNumber *sGetPlaybackRateFromDirectiveLine(NSString *line)
+{
+    NSString *fields = [line substringFromIndex:[sSpeedDirectivePrefix length]];
+
+    for (NSString *field in [fields componentsSeparatedByString:@","]) {
+        NSRange equalsRange = [field rangeOfString:@"="];
+        if (equalsRange.location == NSNotFound) continue;
+
+        NSCharacterSet *whitespace = [NSCharacterSet whitespaceCharacterSet];
+
+        NSString *key   = [[field substringToIndex:equalsRange.location]      stringByTrimmingCharactersInSet:whitespace];
+        NSString *value = [[field substringFromIndex:NSMaxRange(equalsRange)] stringByTrimmingCharactersInSet:whitespace];
+
+        if (![key isEqualToString:@"rate"]) continue;
+
+        NSScanner *scanner = [NSScanner scannerWithString:value];
+        double rate;
+        if ([scanner scanDouble:&rate] && [scanner isAtEnd]) {
+            return @(rate);
+        }
+    }
+
+    return nil;
+}
+
+
+static void sCollectURL(NSURL *inURL, NSNumber *playbackRate, NSMutableArray *results, NSInteger depth)
 {
     static const NSInteger sMaxDepth = 5;
 
     if (depth > sMaxDepth) {
         return;
     }
-    
+
     NSString *type = sGetFileType(inURL);
     if (!type) return;
 
@@ -115,7 +175,13 @@ static void sCollectURL(NSURL *inURL, NSMutableArray *results, NSInteger depth)
         }
 
     } else if (UTTypeConformsTo((__bridge CFStringRef)type, kUTTypeAudiovisualContent) || (depth == 0)) {
-        [results addObject:inURL];
+        // A directive before a nested playlist or folder is discarded, not
+        // distributed — the rate lands only here, on a single audio file.
+        CollectedURL *item = [[CollectedURL alloc] init];
+        [item setURL:inURL];
+        [item setPlaybackRate:playbackRate];
+
+        [results addObject:item];
     }
 }
 
@@ -131,7 +197,7 @@ static void sCollectFolderURL(NSURL *inURL, NSMutableArray *results, NSInteger d
     NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:inURL includingPropertiesForKeys:@[ NSURLTypeIdentifierKey ] options:options error:&error];
 
     for (NSURL *url in contents) {
-        sCollectURL(url, results, depth);
+        sCollectURL(url, nil, results, depth);
     }
 }
 
@@ -160,26 +226,40 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
     }
     
     NSURL *baseURL = [inURL URLByDeletingLastPathComponent];
-    
+
+    // A directive applies to the next entry line only, then resets — the same
+    // association rule as #EXTINF. The entry consumes it whether or not it
+    // resolves, so a rate never leaks past a missing file onto the next track.
+    NSNumber *playbackRate = nil;
+
     if ([contents length] >= 8) {
         for (NSString *line in [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]]) {
-            if ([line hasPrefix:@"#"]) {
+            if ([line hasPrefix:sSpeedDirectivePrefix]) {
+                playbackRate = sGetPlaybackRateFromDirectiveLine(line);
+
+            } else if ([line hasPrefix:@"#"]) {
                 continue;
 
             } else if ([line hasPrefix:@"file:"]) {
                 NSURL *url = [NSURL URLWithString:line];
-                
+
                 if ([url isFileURL]) {
-                    sCollectURL(url, results, depth);
+                    sCollectURL(url, playbackRate, results, depth);
                 }
-                
+
+                playbackRate = nil;
+
             } else {
                 NSString *trimmedPath = [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                if (![trimmedPath length]) continue;
+
                 NSURL *url = [NSURL fileURLWithPath:trimmedPath relativeToURL:baseURL];
-                
+
                 if ([url isFileURL]) {
-                    sCollectURL(url, results, depth);
+                    sCollectURL(url, playbackRate, results, depth);
                 }
+
+                playbackRate = nil;
             }
         }
     }
@@ -193,7 +273,7 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
     NSMutableArray *results = [NSMutableArray array];
 
     for (NSURL *inURL in inURLs) {
-        sCollectURL(inURL, results, 0);
+        sCollectURL(inURL, nil, results, 0);
     }
 
     NSInteger resultsCount = [results count];
@@ -226,10 +306,15 @@ static void sCollectM3UPlaylistURL(NSURL *inURL, NSMutableArray *results, NSInte
 
             [[self tableView] beginUpdates];
 
-            for (NSURL *url in results) {
-                Track *track = [Track trackWithFileURL:url];
-                
+            for (CollectedURL *item in results) {
+                Track *track = [Track trackWithFileURL:[item URL]];
+
                 if (track) {
+                    NSNumber *playbackRate = [item playbackRate];
+                    if (playbackRate) {
+                        [track setPlaybackRate:[playbackRate doubleValue]];
+                    }
+
                     [_tracks insertObject:track atIndex:index];
                     [indexSet addIndex:index];
                     index++;
