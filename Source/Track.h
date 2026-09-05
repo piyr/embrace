@@ -80,6 +80,12 @@ typedef NS_ENUM(NSInteger, TrackLabel) {
 @property (nonatomic) double playbackRate;
 @property (nonatomic) BOOL cortinaTimerActive;
 
+// Whether the effect chain is bypassed while this track plays. Applied by the engine at the
+// track boundary along with the rate. Follows the genre against the effect-bypass genre
+// preference unless an override is set; the override is what gets saved with the setlist.
+@property (nonatomic) BOOL bypassesEffects;
+@property (nonatomic) NSNumber *bypassesEffectsOverride;
+
 @property (nonatomic) NSTimeInterval expectedDuration;
 
 @property (nonatomic) NSTimeInterval estimatedEndTime;

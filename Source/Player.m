@@ -586,7 +586,18 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 
     [self _updateLoudnessAndPreAmp];
 
-    if (![_engine playAudioFile:file startTime:[track startTime] stopTime:[track effectiveStopTime] padding:padding]) {
+    BOOL bypassesEffects = [track bypassesEffects];
+
+    EmbraceLog(@"Player", @"starting %@ at rate %g, effects %@", track, _playbackRate, bypassesEffects ? @"bypassed" : @"active");
+
+    BOOL ok = [_engine playAudioFile: file
+                           startTime: [track startTime]
+                            stopTime: [track effectiveStopTime]
+                             padding: padding
+                                rate: _playbackRate
+                     bypassesEffects: bypassesEffects];
+
+    if (!ok) {
         EmbraceLog(@"Player", @"Couldn't play %@", file);
         [self hardStop];
     }
@@ -971,8 +982,9 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 }
 
 
-// Used when there is no audio in flight to glide -- at a track boundary the graph has been
-// muted and the new source has not started, so the rate can just be set.
+// Adopts a track's rate as the current one without touching the engine. The engine gets the
+// rate from -_setupAndStartPlayback, which hands it over with the file so it is applied only
+// once the previous track has drained -- at this point that track is usually still audible.
 //
 - (void) _setPlaybackRateImmediately:(double)rate
 {
@@ -987,7 +999,6 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 
     _playbackRate = rate;
     _activePlaybackRate = rate;
-    [_engine updatePlaybackRate:rate];
     [self _updateTimeStrings];
 
     for (id<PlayerListener> listener in _listeners) {

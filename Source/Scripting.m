@@ -299,6 +299,18 @@
 }
 
 
+- (void) setScriptingBypassesEffects:(NSNumber *)bypassesEffects
+{
+    [self setBypassesEffects:[bypassesEffects boolValue]];
+}
+
+
+- (NSNumber *) scriptingBypassesEffects
+{
+    return @([self bypassesEffects]);
+}
+
+
 - (NSString *) scriptingKeySignature
 {
     return GetTraditionalStringForTonality([self tonality]);

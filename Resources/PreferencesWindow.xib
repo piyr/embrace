@@ -278,11 +278,11 @@
             <point key="canvasLocation" x="-89" y="421"/>
         </view>
         <view id="EW9-yV-OXP" userLabel="Advanced Pane">
-            <rect key="frame" x="0.0" y="0.0" width="420" height="198"/>
+            <rect key="frame" x="0.0" y="0.0" width="420" height="228"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="khf-AK-51B">
-                    <rect key="frame" x="18" y="89" width="128" height="17"/>
+                    <rect key="frame" x="18" y="119" width="128" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="AppleScript handler:" id="5Fc-fL-uac">
                         <font key="font" metaFont="system"/>
@@ -291,7 +291,7 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FNt-B8-HCr">
-                    <rect key="frame" x="37" y="156" width="109" height="17"/>
+                    <rect key="frame" x="37" y="186" width="109" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Allow addition of:" id="rKB-Kd-bmk">
                         <font key="font" metaFont="system"/>
@@ -300,7 +300,7 @@
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MVK-di-o8T">
-                    <rect key="frame" x="150" y="84" width="231" height="26"/>
+                    <rect key="frame" x="150" y="114" width="231" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="c9k-T9-BjO" id="xxy-2I-vX9">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -318,7 +318,7 @@
                     </connections>
                 </popUpButton>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zPI-84-7nx">
-                    <rect key="frame" x="151" y="156" width="251" height="18"/>
+                    <rect key="frame" x="151" y="186" width="251" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="radio" title="Built-in and safe system effects" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="8M4-UR-ZeM">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -333,7 +333,7 @@
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ldN-kD-qk1">
-                    <rect key="frame" x="151" y="132" width="138" height="18"/>
+                    <rect key="frame" x="151" y="162" width="138" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="radio" title="All installed effects" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="m9n-fc-paT">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -344,7 +344,7 @@
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ym0-Nq-TMg">
-                    <rect key="frame" x="65" y="51" width="291" height="18"/>
+                    <rect key="frame" x="65" y="81" width="291" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Enable keyboard shortcuts for Play and Stop" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Lh4-aJ-JGq">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -356,7 +356,7 @@
                     </connections>
                 </button>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-b01">
-                    <rect key="frame" x="18" y="21" width="128" height="17"/>
+                    <rect key="frame" x="18" y="51" width="128" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Fade cortinas after:" id="Ctn-Lc-d11">
                         <font key="font" metaFont="system"/>
@@ -365,7 +365,7 @@
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Fd-v02">
-                    <rect key="frame" x="150" y="19" width="54" height="21"/>
+                    <rect key="frame" x="150" y="49" width="54" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="80" drawsBackground="YES" id="Ctn-Fc-e04">
                         <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" allowsFloats="NO" usesGroupingSeparator="NO" minimumIntegerDigits="1" maximumIntegerDigits="3" id="Ctn-Nf-m03"/>
@@ -378,7 +378,7 @@
                     </connections>
                 </textField>
                 <stepper verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-St-p06">
-                    <rect key="frame" x="208" y="16" width="19" height="27"/>
+                    <rect key="frame" x="208" y="46" width="19" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <stepperCell key="cell" continuous="YES" alignment="left" increment="5" minValue="5" maxValue="600" doubleValue="80" id="Ctn-Sc-l07"/>
                     <connections>
@@ -386,13 +386,38 @@
                     </connections>
                 </stepper>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Sl-b09">
-                    <rect key="frame" x="233" y="21" width="55" height="17"/>
+                    <rect key="frame" x="233" y="51" width="55" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="seconds" id="Ctn-Sm-c10">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
+                </textField>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Byp-La-b01">
+                    <rect key="frame" x="18" y="21" width="128" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Bypass effects for:" id="Byp-Lc-d11">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Byp-Fd-v02">
+                    <rect key="frame" x="150" y="19" width="231" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Genres, comma separated" title="Cortina" drawsBackground="YES" id="Byp-Fc-e04">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <binding destination="-2" name="value" keyPath="self.preferences.effectBypassGenres" id="Byp-Bd-f05">
+                            <dictionary key="options">
+                                <bool key="NSContinuouslyUpdatesValue" value="NO"/>
+                            </dictionary>
+                        </binding>
+                    </connections>
                 </textField>
             </subviews>
             <point key="canvasLocation" x="156" y="733"/>

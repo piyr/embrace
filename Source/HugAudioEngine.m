@@ -18,6 +18,7 @@
 
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioUnitParameters.h>
+#import <Accelerate/Accelerate.h>
 
 #include <stdatomic.h>
 
@@ -103,6 +104,11 @@ typedef struct {
     // during a track rather than trying to catch a 4 point indicator dot mid-set.
     volatile UInt32 limiterEngageCount;
     volatile BOOL   limiterWasActive;
+
+    // Consecutive renders whose output, measured ahead of the volume ramper, was digital
+    // silence. Zeroed on the render thread when the source is swapped out, so it only counts
+    // silence produced after that point. See -_waitForGraphToDrain.
+    volatile UInt32 silentRenderCount;
 } RenderUserInfo;
 
 
@@ -209,7 +215,8 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     AUAudioUnit            *_timePitchAudioUnit;
     float                   _volume;
 
-    uint64_t _graphSilencedHostTime;
+    BOOL _graphNeedsDrain;
+    BOOL _effectsBypassed;
 
     UInt32 _reportedUpstreamFrameCount;
     UInt32 _reportedDownstreamFrameCount;
@@ -521,6 +528,8 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
             HugLinearRamperReset(volumeRamper,  userInfo->volume);
             HugStereoFieldReset(stereoField, userInfo->stereoBalance, userInfo->stereoWidth);
 
+            userInfo->silentRenderCount = 0;
+
             atomic_store(&userInfo->inputBlock, nextInputBlock);
 
         } else {
@@ -635,6 +644,14 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         float *leftData  = ioData->mNumberBuffers > 0 ? ioData->mBuffers[0].mData : NULL;
         float *rightData = ioData->mNumberBuffers > 1 ? ioData->mBuffers[1].mData : NULL;
 
+        // Measured ahead of the volume ramper: volume is zero throughout a track change, so
+        // the ramper's output says nothing about what the units above are still flushing.
+        //
+        float peak = 0, channelPeak = 0;
+        if (leftData)  { vDSP_maxmgv(leftData,  1, &channelPeak, inNumberFrames); peak = MAX(peak, channelPeak); }
+        if (rightData) { vDSP_maxmgv(rightData, 1, &channelPeak, inNumberFrames); peak = MAX(peak, channelPeak); }
+        userInfo->silentRenderCount = (peak < 1.0e-6f) ? (userInfo->silentRenderCount + 1) : 0;
+
         float volume = userInfo->volume;
         HugLinearRamperProcess(volumeRamper, leftData, rightData, inNumberFrames, volume);
         
@@ -736,7 +753,7 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         [unit reset];
     }
 
-    _graphSilencedHostTime = 0;
+    _graphNeedsDrain = NO;
 
     if (_updateTimer) {
         [_updateTimer invalidate];
@@ -745,33 +762,63 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 }
 
 
-// The units in the graph hold downstreamLatency worth of the previous track. Once the input
-// block went nil they began flushing it out, but nothing unmutes until we say so -- block
-// here for whatever is left of that, so the outgoing track's tail is never heard under the
-// start of the incoming one. Usually preparing the source took longer and this returns
-// immediately. Waiting costs nothing at the head of the new track either: its own audio
-// cannot emerge from the graph until downstreamLatency after it was sent, which is later
-// still.
+// After -stopPlayback the units in the graph are still flushing the previous track. Block
+// here until the render thread has seen the output go silent, so nothing of that track is
+// heard under the head of the next one and no unit gets a parameter change with audio in
+// flight. Silence is observed rather than predicted from downstreamLatency: AUNewTimePitch's
+// real latency grows while the rate is off 1.0 (measured up to 298 ms at 96 kHz, retained at
+// 1.0) and the reported figure never moves. Usually preparing the source took longer than
+// the flush and this returns at once.
+//
+// The counter was zeroed at the swap, so consecutive silent renders since then mean the
+// input that fed them was silent too: the delay lines hold nothing audible. Bounded, since
+// a unit with a noise floor would never read as silent.
 //
 - (void) _waitForGraphToDrain
 {
-    if (!_graphSilencedHostTime) return;
+    if (!_graphNeedsDrain) return;
+    _graphNeedsDrain = NO;
 
-    uint64_t now = HugGetCurrentHostTime();
+    if (![self _isRunning]) return;
 
-    if (now > _graphSilencedHostTime) {
-        NSTimeInterval elapsed = HugGetSecondsWithHostTime(now - _graphSilencedHostTime);
-        NSTimeInterval latency = HugGetSecondsWithHostTime(_renderUserInfo.downstreamLatency);
+    uint64_t start = HugGetCurrentHostTime();
+    NSTimeInterval waited = 0;
 
-        if (elapsed < latency) {
-            NSTimeInterval remaining = latency - elapsed;
+    while (_renderUserInfo.silentRenderCount < 2) {
+        waited = HugGetSecondsWithHostTime(HugGetCurrentHostTime() - start);
 
-            HugLog(@"HugAudioEngine", @"waiting %g ms for graph to drain", remaining * 1000);
-            usleep((useconds_t)(remaining * 1000000));
+        if (waited > 0.75) {
+            HugLog(@"HugAudioEngine", @"graph did not drain within %g ms, continuing", waited * 1000);
+            return;
         }
+
+        usleep(2000);
     }
 
-    _graphSilencedHostTime = 0;
+    if (waited > 0) {
+        HugLog(@"HugAudioEngine", @"waited %g ms for graph to drain", waited * 1000);
+    }
+}
+
+
+// Both of these are only called from -playAudioFile:..., between the drain and the send of
+// the next source, i.e. while every unit is processing silence.
+//
+- (void) _applyPlaybackRate:(double)rate
+{
+    [self updatePlaybackRate:rate];
+}
+
+
+- (void) _applyEffectsBypass:(BOOL)bypass
+{
+    _effectsBypassed = bypass;
+
+    for (AUAudioUnit *unit in _effectAudioUnits) {
+        if ([unit shouldBypassEffect] != bypass) {
+            [unit setShouldBypassEffect:bypass];
+        }
+    }
 }
 
 
@@ -954,6 +1001,8 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
              startTime: (NSTimeInterval) startTime
               stopTime: (NSTimeInterval) stopTime
                padding: (NSTimeInterval) padding
+                  rate: (double) rate
+       bypassesEffects: (BOOL) bypassesEffects
 {
     HugLogMethod();
 
@@ -976,9 +1025,14 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         return NO;
     }
     
-    [self _sendAudioSourceToRenderThread:source];
-
+    // Order matters: the graph must be silent before the units are touched, and the new
+    // source must not enter until they have been.
+    //
     [self _waitForGraphToDrain];
+    [self _applyPlaybackRate:rate];
+    [self _applyEffectsBypass:bypassesEffects];
+
+    [self _sendAudioSourceToRenderThread:source];
     _renderUserInfo.volume = _volume;
 
     // Read the rate back off the unit rather than trusting what we last wrote, so a track
@@ -988,8 +1042,9 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     if (_timePitchAudioUnit) {
         AUParameter *rateParam = [[_timePitchAudioUnit parameterTree] parameterWithID:0 scope:kAudioUnitScope_Global element:0];
 
-        HugLog(@"HugAudioEngine", @"time-pitch rate parameter reads %g at track start (%@)",
-            [rateParam value], ([rateParam value] == 1.0f) ? @"transparent" : @"ACTIVE");
+        HugLog(@"HugAudioEngine", @"time-pitch rate parameter reads %g at track start (%@), effects %@",
+            [rateParam value], ([rateParam value] == 1.0f) ? @"transparent" : @"ACTIVE",
+            bypassesEffects ? @"bypassed" : @"active");
     }
 
     HugLog(@"HugAudioEngine", @"setup complete, starting output");
@@ -1025,17 +1080,16 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         [self _sendAudioSourceToRenderThread:nil];
 
         // The units in the graph are still rendering -- -_reallyStopHardware is 30 seconds
-        // out -- so we cannot -reset them from here. They are being fed silence as of now,
-        // and will have flushed the outgoing track once downstreamLatency has elapsed.
-        // -_waitForGraphToDrain holds the next track's audio back until they have.
+        // out -- so we cannot -reset them from here. They are being fed silence as of now;
+        // -_waitForGraphToDrain holds the next track back until they have flushed it.
         //
-        _graphSilencedHostTime = HugGetCurrentHostTime();
+        _graphNeedsDrain = YES;
 
         [self performSelector:@selector(_reallyStopHardware) withObject:nil afterDelay:30];
 
     } else {
         // Hardware is stopped, so -_reallyStopHardware has already reset the units.
-        _graphSilencedHostTime = 0;
+        _graphNeedsDrain = NO;
     }
 
     HugRingBufferConfirmReadAll(_statusRingBuffer);
@@ -1127,6 +1181,14 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
     }
 
     _effectAudioUnits = effectAudioUnits;
+
+    // A unit added mid-track inherits the bypass state of the track that is playing.
+    for (AUAudioUnit *unit in effectAudioUnits) {
+        if ([unit shouldBypassEffect] != _effectsBypassed) {
+            [unit setShouldBypassEffect:_effectsBypassed];
+        }
+    }
+
     [self _reconnectGraph];
 
     // Only safe after -_reconnectGraph, which waits for the render thread to pick up the new

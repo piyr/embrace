@@ -48,6 +48,7 @@ static NSDictionary *sGetDefaultValues()
         @"allowsPlaybackShortcuts": @NO,
 
         @"cortinaFadeInterval":     @80,
+        @"effectBypassGenres":      @"Cortina",
 
         @"keySignatureDisplayMode": @( KeySignatureDisplayModeRaw ),
         @"duplicateStatusMode":     @( DuplicateStatusModeSameFile ),
@@ -302,6 +303,27 @@ static void sRegisterDefaults()
     }
 
     _cortinaFadeInterval = cortinaFadeInterval;
+}
+
+
+- (BOOL) shouldBypassEffectsForGenre:(NSString *)genre
+{
+    // Length check first: a nil genre compares equal to everything.
+    if (![genre length]) return NO;
+
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *trimmedGenre = [genre stringByTrimmingCharactersInSet:whitespace];
+    if (![trimmedGenre length]) return NO;
+
+    for (NSString *entry in [_effectBypassGenres componentsSeparatedByString:@","]) {
+        NSString *trimmedEntry = [entry stringByTrimmingCharactersInSet:whitespace];
+
+        if ([trimmedEntry length] && ([trimmedEntry caseInsensitiveCompare:trimmedGenre] == NSOrderedSame)) {
+            return YES;
+        }
+    }
+
+    return NO;
 }
 
 

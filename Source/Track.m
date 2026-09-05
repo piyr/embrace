@@ -2,6 +2,7 @@
 // MIT License (or) 1-clause BSD License
 
 #import "Track.h"
+#import "Preferences.h"
 #import "MusicAppManager.h"
 #import "TrackKeys.h"
 #import "AppDelegate.h"
@@ -21,6 +22,7 @@ static NSString * const sLabelKey             = @"trackLabel";
 static NSString * const sStopsAfterPlayingKey = @"stopsAfterPlaying";
 static NSString * const sIgnoresAutoGapKey    = @"ignoresAutoGap";
 static NSString * const sPlaybackRateKey      = @"playbackRate";
+static NSString * const sBypassesEffectsKey   = @"bypassesEffectsOverride";
 
 const double TrackPlaybackRateNormal  = 1.0;
 const double TrackPlaybackRateMinimum = 0.97;
@@ -385,6 +387,10 @@ static NSURL *sGetInternalURLForUUID(NSUUID *UUID, NSString *extension)
 
     if (_playbackRate && (_playbackRate != TrackPlaybackRateNormal)) {
         [state setObject:@(_playbackRate) forKey:sPlaybackRateKey];
+    }
+
+    if (_bypassesEffectsOverride) {
+        [state setObject:_bypassesEffectsOverride forKey:sBypassesEffectsKey];
     }
 
     if (_album)            [state setObject:_album                forKey:TrackKeyAlbum];
@@ -900,6 +906,30 @@ static NSURL *sGetInternalURLForUUID(NSUUID *UUID, NSString *extension)
 
     if ([self playbackRate] != playbackRate) {
         _playbackRate = playbackRate;
+
+        _dirty = YES;
+        [self _saveStateImmediately:NO];
+    }
+}
+
+
+- (BOOL) bypassesEffects
+{
+    if (_bypassesEffectsOverride) return [_bypassesEffectsOverride boolValue];
+    return [[Preferences sharedInstance] shouldBypassEffectsForGenre:[self genre]];
+}
+
+
+- (void) setBypassesEffects:(BOOL)bypassesEffects
+{
+    [self setBypassesEffectsOverride:@(bypassesEffects)];
+}
+
+
+- (void) setBypassesEffectsOverride:(NSNumber *)bypassesEffectsOverride
+{
+    if (![_bypassesEffectsOverride isEqual:bypassesEffectsOverride]) {
+        _bypassesEffectsOverride = bypassesEffectsOverride;
 
         _dirty = YES;
         [self _saveStateImmediately:NO];

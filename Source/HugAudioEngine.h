@@ -10,10 +10,16 @@
 
 - (BOOL) configureWithDeviceID:(AudioDeviceID)deviceID settings:(NSDictionary *)settings;
 
+// Everything the graph needs for the track travels with the file. The rate and the effect
+// bypass are applied only once the graph has drained the previous track, so no unit sees a
+// state change with audio in flight. -updatePlaybackRate: remains for live changes.
+//
 - (BOOL) playAudioFile: (HugAudioFile *) file
              startTime: (NSTimeInterval) startTime
               stopTime: (NSTimeInterval) stopTime
-               padding: (NSTimeInterval) padding;
+               padding: (NSTimeInterval) padding
+                  rate: (double) rate
+       bypassesEffects: (BOOL) bypassesEffects;
 
 // Stops playback of the audio file
 - (void) stopPlayback;

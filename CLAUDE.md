@@ -42,6 +42,15 @@ Other non-obvious wiring:
 - Status packets are timestamped with the moment their audio will be *heard* and held by
   `-_readRingBuffers` until then. `downstreamLatency` (time-pitch + effects) is added so
   end-of-track is not reported early.
+- **`[AUNewTimePitch latency]` is not the real latency.** It reports 85.3 ms at 96 kHz, but
+  the unit's actual delay grows while the rate is off 1.0 (about 2800 frames per minute at
+  1.02, saturating at 28592 frames = 298 ms; 0.97 pins there too, 0.98 settles at 7188) and
+  is kept when the rate returns to 1.0. Only `-reset` restores it. Track changes therefore
+  wait for *observed* silence (`silentRenderCount`, measured ahead of the volume ramper)
+  rather than for `downstreamLatency` to elapse.
+- The rate and the effect bypass for a track travel with the file into `-playAudioFile:` and
+  are applied only after that drain, while every unit is processing silence. Nothing else
+  should write to the units at a track boundary; `-updatePlaybackRate:` is for live ramps.
 - `-[AUAudioUnit reset]` is only safe when the output unit is stopped, i.e. in
   `-_reallyStopHardware`. The hardware keeps running for 30 seconds after `-stopPlayback`.
 

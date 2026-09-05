@@ -199,7 +199,10 @@ NSString * const EffectDidDeallocNotification = @"EffectDidDealloc";
 
 - (void) setBypass:(BOOL)bypass
 {
-    [_audioUnit setShouldBypassEffect:bypass];
+    // Only write on a change: a redundant property set still reaches a live plugin.
+    if ([_audioUnit shouldBypassEffect] != bypass) {
+        [_audioUnit setShouldBypassEffect:bypass];
+    }
 }
 
 

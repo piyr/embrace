@@ -87,6 +87,11 @@ extern const NSInteger CortinaFadeIntervalMaximum;
 // [CortinaFadeIntervalMinimum, CortinaFadeIntervalMaximum] on set.
 @property (nonatomic) NSInteger cortinaFadeInterval;
 
+// Comma separated genres whose tracks play with the effect chain bypassed. Matched
+// case-insensitively; a track with no genre never matches.
+@property (nonatomic) NSString *effectBypassGenres;
+- (BOOL) shouldBypassEffectsForGenre:(NSString *)genre;
+
 @property (nonatomic) KeySignatureDisplayMode keySignatureDisplayMode;
 @property (nonatomic) DuplicateStatusMode duplicateStatusMode;
 

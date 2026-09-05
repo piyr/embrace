@@ -261,6 +261,10 @@
                 <cocoa key="scriptingIgnoresAutoGap"/>
             </property>
 
+            <property name="bypasses effects" access="rw" code="byfx" type="boolean" description="If true, the effect chain is bypassed while this track plays. Defaults from the genre and the effect-bypass genres preference; setting it overrides that for this track.">
+                <cocoa key="scriptingBypassesEffects"/>
+            </property>
+
 			<property name="grouping" access="r" code="grop" type="text" description="The grouping of the track.">
 				<cocoa key="scriptingGrouping"/>
             </property>

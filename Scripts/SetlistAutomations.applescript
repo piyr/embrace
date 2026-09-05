@@ -1,7 +1,15 @@
 -- SetlistAutomations.applescript
 -- This script contains event handlers triggered by the CloseEmbrace application.
--- It automatically manages track colors, playback gaps (minimum silence),
--- and effects bypassing based on the genres of the tracks in the setlist.
+-- It automatically manages track colors and playback gaps (minimum silence)
+-- based on the genres of the tracks in the setlist.
+--
+-- Effect bypassing is no longer done here. The app applies it at the track
+-- boundary, while the audio graph is silent, from the "Bypass effects for"
+-- genre list in Preferences > Advanced. A script can still override a single
+-- track ahead of time with `set bypasses effects of t to true` (for example in
+-- the "metadata available" handler). Setting `bypassed of every effect` from
+-- "current track changed" is harmless but redundant, and it lands on the
+-- plugins while the new track is already playing -- leave it out.
 
 using terms from application "CloseEmbrace"
 	
@@ -65,21 +73,9 @@ using terms from application "CloseEmbrace"
 	-- Called whenever the application begins playing a new track or manually switches tracks.
 	-- Responsibilities:
 	-- 1. Automatically update the minimum silence for the upcoming transition based on the next track.
-	-- 2. If a Cortina starts playing:
-	--    a) Bypass any active audio effects for a clean sound.
-	--    b) Spawn an independent background 80s countdown timer to automatically stop/fade the Cortina.
-	-- 3. If a regular genre is playing, ensure audio effects are re-enabled.
 	on current track changed
 		tell application "CloseEmbrace"
 			my updateMinimumSilence()
-			
-			if current track is not missing value then
-				if genre of current track is "Cortina" then
-					set bypassed of every effect to true
-				else
-					set bypassed of every effect to false
-				end if
-			end if
 		end tell
 	end current track changed
 	
