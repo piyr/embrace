@@ -58,6 +58,7 @@
 - (IBAction) performPreferredPlaybackAction:(id)sender;
 - (IBAction) hardSkip:(id)sender;
 - (IBAction) hardStop:(id)sender;
+- (IBAction) rebuildAudioEngine:(id)sender;
 
 - (IBAction) increaseVolume:(id)sender;
 - (IBAction) decreaseVolume:(id)sender;
@@ -224,6 +225,15 @@
         [resetSpeedItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
         [resetSpeedItem setTarget:self];
         [controlsMenu addItem:resetSpeedItem];
+
+        [controlsMenu addItem:[NSMenuItem separatorItem]];
+
+        NSMenuItem *rebuildItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Rebuild Audio Engine", nil)
+                                                             action:@selector(rebuildAudioEngine:)
+                                                      keyEquivalent:@"r"];
+        [rebuildItem setKeyEquivalentModifierMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
+        [rebuildItem setTarget:self];
+        [controlsMenu addItem:rebuildItem];
     }
 
     EmbraceLog(@"Hello", @"Embrace finished launching at %@", [NSDate date]);
@@ -642,6 +652,9 @@
     {
         return [_setlistController validateMenuItem:menuItem];
 
+    } else if (action == @selector(rebuildAudioEngine:)) {
+        return ![[Player sharedInstance] isPlaying];
+
     } else if (action == @selector(sendCrashReports:)){
         BOOL hasCrashReports = TelemetryHasContents(EscapePodGetTelemetryName());
 
@@ -877,6 +890,13 @@
 {
     EmbraceLog(@"AppDelegate", @"hardStop:  sender=%@, event=%@", sender, [NSApp currentEvent]);
     [[Player sharedInstance] hardStop];
+}
+
+
+- (IBAction) rebuildAudioEngine:(id)sender
+{
+    EmbraceLog(@"AppDelegate", @"rebuildAudioEngine:  sender=%@, event=%@", sender, [NSApp currentEvent]);
+    [[Player sharedInstance] rebuildAudioEngine];
 }
 
 

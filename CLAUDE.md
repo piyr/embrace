@@ -53,6 +53,11 @@ Other non-obvious wiring:
   should write to the units at a track boundary; `-updatePlaybackRate:` is for live ramps.
 - `-[AUAudioUnit reset]` is only safe when the output unit is stopped, i.e. in
   `-_reallyStopHardware`. The hardware keeps running for 30 seconds after `-stopPlayback`.
+- Nothing rebuilds the units on its own: `reset` is the only automatic recovery. Controls >
+  Rebuild Audio Engine (Option-Command-R, stopped only) replaces the time-pitch unit and
+  reallocates the effects. If a bad sound survives a stop and restart but clears with a
+  rebuild, the fault was in-process unit state; if it survives the rebuild, look at the
+  device and HAL path.
 
 ## Debugging the engine
 

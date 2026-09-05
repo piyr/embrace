@@ -27,6 +27,11 @@
 // Stops the actual audio hardware
 - (void) stopHardware;
 
+// Stops the hardware, replaces the time-pitch unit with a fresh instance and reallocates the
+// effects' render resources, then reconnects the graph. Recovery from unit state that a
+// -reset does not clear; only meaningful while nothing is playing.
+- (void) rebuildAudioUnits;
+
 // Full-scale, linear, 1.0 = 0dBFS
 - (void) updatePreGain:(float)preGain;
 

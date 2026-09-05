@@ -36,6 +36,10 @@ extern volatile NSInteger PlayerShouldUseCrashPad;
 - (void) hardStop;
 - (void) fadeStop;
 
+// Rebuilds the audio units without waiting out the deferred hardware stop. Ignored while
+// playing. See -[HugAudioEngine rebuildAudioUnits].
+- (void) rebuildAudioEngine;
+
 @property (nonatomic) double volume;
 
 @property (nonatomic, strong) NSArray<Effect *> *effects;

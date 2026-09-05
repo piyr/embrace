@@ -260,21 +260,31 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
         _statusRingBuffer = HugRingBufferCreate(65536);
         _errorRingBuffer  = HugRingBufferCreate(8196);
 
-        AudioComponentDescription timePitchCD = {
-            kAudioUnitType_FormatConverter,
-            kAudioUnitSubType_NewTimePitch,
-            kAudioUnitManufacturer_Apple,
-            0,
-            0
-        };
-        NSError *timePitchError = nil;
-        _timePitchAudioUnit = [[AUAudioUnit alloc] initWithComponentDescription:timePitchCD error:&timePitchError];
-        if (timePitchError) {
-            HugLog(@"HugAudioEngine", @"Error instantiating NewTimePitch: %@", timePitchError);
-        }
+        _timePitchAudioUnit = [self _makeTimePitchAudioUnit];
     }
 
     return self;
+}
+
+
+- (AUAudioUnit *) _makeTimePitchAudioUnit
+{
+    AudioComponentDescription timePitchCD = {
+        kAudioUnitType_FormatConverter,
+        kAudioUnitSubType_NewTimePitch,
+        kAudioUnitManufacturer_Apple,
+        0,
+        0
+    };
+
+    NSError *error = nil;
+    AUAudioUnit *unit = [[AUAudioUnit alloc] initWithComponentDescription:timePitchCD error:&error];
+
+    if (error) {
+        HugLog(@"HugAudioEngine", @"Error instantiating NewTimePitch: %@", error);
+    }
+
+    return unit;
 }
 
 
@@ -1122,6 +1132,38 @@ static OSStatus sHandleAudioDeviceOverload(AudioObjectID inObjectID, UInt32 inNu
 {
     [self stopPlayback];
     [self _reallyStopHardware];
+}
+
+
+- (void) rebuildAudioUnits
+{
+    HugLogMethod();
+
+    // Nothing may be inside the units' render blocks while they are torn down.
+    [self stopHardware];
+
+    // The time-pitch unit carries no user state, so it is simply replaced. The effects
+    // belong to Effect objects that hold the user's settings; dropping their render
+    // resources makes sUnitNeedsConfiguration() rebuild them from scratch in -_reconnectGraph,
+    // which is the same path a fresh launch takes.
+    //
+    _timePitchAudioUnit = [self _makeTimePitchAudioUnit];
+
+    for (AUAudioUnit *unit in _effectAudioUnits) {
+        [unit deallocateRenderResources];
+    }
+
+    _effectsBypassed = NO;
+    _renderUserInfo.limiterEngageCount = 0;
+    _reportedLimiterEngageCount = 0;
+
+    // Reconnect now rather than at the next play so the reallocation, and any work a plugin
+    // does lazily after it, happens while stopped. The latency line this logs is the marker
+    // that the rebuild took place.
+    //
+    [self _reconnectGraph];
+
+    HugLog(@"HugAudioEngine", @"audio units rebuilt");
 }
 
 

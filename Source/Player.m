@@ -792,6 +792,19 @@ static OSStatus sHandleAudioDevicePropertyChanged(AudioObjectID inObjectID, UInt
 }
 
 
+- (void) rebuildAudioEngine
+{
+    EmbraceLog(@"Player", @"-rebuildAudioEngine");
+
+    if ([self isPlaying]) {
+        EmbraceLog(@"Player", @"ignoring -rebuildAudioEngine while playing");
+        return;
+    }
+
+    [_engine rebuildAudioUnits];
+}
+
+
 - (void) fadeStop
 {
     EmbraceLog(@"Player", @"-fadeStop");
